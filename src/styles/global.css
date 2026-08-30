@@ -68,11 +68,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, video:focus-visible 
 
 /* Navigation and shared text roles */
 .site-header { position: sticky; top: 0; z-index: 20; background: var(--header); backdrop-filter: blur(18px); border-bottom: 1px solid var(--line); }
+/* Keep the shared navigation above page snapshots during client-side navigation. */
+::view-transition-group(site-header) { z-index: 20; }
 .header-inner { min-height: 76px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 24px; }
 .brand { justify-self: start; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; font-size: var(--type-body); font-weight: var(--weight-heading); }
 .brand-brace { color: var(--accent); }
 .main-nav { display: flex; gap: 24px; align-items: center; }
-.main-nav a { color: var(--muted); font-size: var(--type-small); font-weight: var(--weight-medium); padding: 12px 0; }
+.main-nav a { color: var(--muted); font-size: var(--type-small); font-weight: var(--weight-medium); padding: 12px 0; white-space: nowrap; }
 .main-nav a:hover, .main-nav a.active { color: var(--text); }
 .main-nav a.active { text-decoration: underline; text-underline-offset: 7px; text-decoration-thickness: 1px; }
 .header-actions { justify-self: end; display: flex; gap: 8px; }
@@ -237,7 +239,6 @@ main > .home-section:first-of-type { border-top: 0; }
 @media (max-width: 840px) {
   .header-inner { grid-template-columns: minmax(0, 1fr) auto; gap: 0 20px; padding-top: 12px; }
   .main-nav { order: 3; grid-column: 1 / -1; justify-content: space-between; gap: 16px; padding-block: 8px; flex-wrap: wrap; }
-  .site-header { position: relative; }
   .article-grid { grid-template-columns: minmax(0, 1fr); max-width: var(--reading-width); }
   .toc { display: none; }
 }

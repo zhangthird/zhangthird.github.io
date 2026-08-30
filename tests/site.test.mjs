@@ -513,3 +513,18 @@ test('npm build and dev clean photos first, and manual cleaning is available',()
   const {scripts}=JSON.parse(readFileSync('package.json','utf8'));
   for(const name of ['prebuild','predev','photos:clean'])assert.equal(scripts[name],'node scripts/sanitize-photos.mjs');
 });
+
+test('navigation stays sticky at all breakpoints and does not fade with page transitions',()=>{
+  const css=readFileSync('src/styles/global.css','utf8');
+  const header=readFileSync('src/components/Header.astro','utf8');
+  const headerRules=[...css.matchAll(/\.site-header\s*\{([^}]+)\}/g)].map(match=>match[1]);
+  assert.ok(headerRules.some(rule=>/position:\s*sticky/.test(rule)));
+  assert.ok(headerRules.every(rule=>!/position:\s*(relative|static|absolute)/.test(rule)));
+  assert.match(header,/transition:name="site-header"/);
+  assert.match(header,/transition:animate="none"/);
+  for(const file of ['index.html','research/index.html','research/react-agent-loop/index.html','photos/index.html']){
+    const html=read(file);
+    assert.equal([...html.matchAll(/class="main-nav"/g)].length,1);
+    assert.match(html,/view-transition-name:\s*site-header/);
+  }
+});
