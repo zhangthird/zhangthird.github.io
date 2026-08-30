@@ -91,7 +91,7 @@ const socialImage = image ? new URL(image, Astro.site ?? 'https://zhangthird.git
 
       function bindInteractions() {
         const root = document.documentElement;
-        const runtime = window as Window & { __siteShortcutBound?: boolean; __sitePointerBound?: boolean; __demoObserver?: IntersectionObserver };
+        const runtime = window as Window & { __siteShortcutBound?: boolean; __demoObserver?: IntersectionObserver };
         let savedTheme; try { savedTheme = localStorage.getItem('theme'); } catch {}
         if (savedTheme === 'light' || savedTheme === 'dark') root.dataset.theme = savedTheme;
         const themeButton = document.querySelector<HTMLButtonElement>('#theme-toggle');
@@ -203,14 +203,6 @@ const socialImage = image ? new URL(image, Astro.site ?? 'https://zhangthird.git
               }
             }, 120);
           });
-        }
-
-        if (!runtime.__sitePointerBound) {
-          runtime.__sitePointerBound = true;
-          window.addEventListener('pointermove', (event) => {
-            document.documentElement.style.setProperty('--pointer-x', `${event.clientX}px`);
-            document.documentElement.style.setProperty('--pointer-y', `${event.clientY}px`);
-          }, { passive: true });
         }
 
         runtime.__demoObserver?.disconnect();

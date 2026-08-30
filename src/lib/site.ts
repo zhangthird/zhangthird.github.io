@@ -1,14 +1,10 @@
 export const SITE = {
   name: 'Cheng Cui',
-  shortName: 'CC',
   title: 'Cheng Cui — Research, Code & Notes',
   description:
     'Notes on reinforcement learning, AI agents, and UAV communications, alongside personal essays.',
-  tagline: 'Machine Learning · Reinforcement Learning · AI Agents',
-  location: 'Suzhou, China',
   email: 'icuicheng@foxmail.com',
   github: 'https://github.com/zhangthird',
-  scholar: '',
 };
 
 export const NAV = [

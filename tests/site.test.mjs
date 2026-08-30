@@ -584,3 +584,20 @@ test('navigation stays sticky at all breakpoints and does not fade with page tra
     assert.match(html,/view-transition-name:\s*site-header/);
   }
 });
+
+test('obsolete theme files and unused runtime code stay out of the project and deployment',()=>{
+  for(const file of ['index.html','404.html','about/index.html','archives/index.html','friends/index.html','search/index.html','tags/index.html','api-content/index.html','api-info/index.html','styles/main.css','media/gridea-search/gridea-search.js','media/gridea-search/result-template.ejs','media/scripts/index.js','media/images/geometry2.png','media/images/sidebar-bg.jpg','media/logo.png','src/components/ProjectCard.astro','scripts/sanitize-legacy.mjs']){
+    assert.equal(existsSync(file),false,file);
+  }
+  for(const file of ['index.html','404.html','about/index.html','archives/index.html','friends/index.html','search/index.html','tags/index.html']){
+    assert.ok(existsSync(join(root,file)),file+' is still generated');
+  }
+  for(const folder of ['media','styles','api-content','api-info'])assert.equal(existsSync(join(root,folder)),false,folder);
+  const layout=readFileSync('src/layouts/BaseLayout.astro','utf8');
+  assert.doesNotMatch(layout,/__sitePointerBound|--pointer-[xy]|pointermove/);
+  // Documented video support and all actual copy modes remain available.
+  assert.match(layout,/data-autoplay-demo/);
+  assert.ok(messages['math.tex']);
+  assert.ok(messages['math.copiedMarkdown']);
+  for(const key of ['math.title','math.close','math.markdown','math.viewSource','math.source'])assert.equal(Object.hasOwn(messages,key),false,key);
+});
