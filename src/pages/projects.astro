@@ -1,0 +1,8 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import T from '../components/T.astro';
+---
+<BaseLayout titleKey="meta.projects.title" descriptionKey="meta.projects.description">
+  <section class="page-intro page-width narrow-intro"><h1><T k="nav.projects" /></h1></section>
+  <section class="project-page page-width"><article id="personal-site" class="project-detail"><div class="project-detail-top"><span>01</span><T k="project.type" /></div><h2><T k="project.name" /></h2><p><T k="project.intro" /></p><div class="project-columns"><div><span class="mini-label"><T k="project.rendering" /></span><p><T k="project.renderingBody" /></p></div><div><span class="mini-label"><T k="search.title" /></span><p><T k="project.searchBody" /></p></div></div><a class="primary-link" href="https://github.com/zhangthird/zhangthird.github.io"><T k="project.source" /> <span>↗</span></a></article></section>
+</BaseLayout>

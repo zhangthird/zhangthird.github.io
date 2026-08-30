@@ -1,0 +1,19 @@
+---
+import { getCollection } from 'astro:content';
+import T from '../components/T.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostList from '../components/PostList.astro';
+
+const posts = (await getCollection('research'))
+  .filter(post => !post.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+<BaseLayout titleKey="meta.research.title" descriptionKey="meta.research.description">
+  <section class="page-intro page-width narrow-intro">
+    <h1><T k="nav.research" /></h1>
+    <p><T k="researchIntro" /></p>
+  </section>
+  <section class="page-width listing-section">
+    {posts.length ? <PostList posts={posts} /> : <p><T k="empty" /></p>}
+  </section>
+</BaseLayout>

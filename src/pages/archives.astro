@@ -1,0 +1,51 @@
+---
+import { getCollection } from 'astro:content';
+import T from '../components/T.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { legacyPosts } from '../lib/legacy';
+
+const posts = (await getCollection('research'))
+  .filter(post => !post.data.draft)
+  .map(post => ({
+    title: post.data.title,
+    date: post.data.pubDate.toISOString().slice(0, 10),
+    category: 'nav.research',
+    href: `/${post.collection}/${post.id}/`,
+  }));
+const entries = [
+  ...posts,
+  ...legacyPosts.map(post => ({
+    title: post.title,
+    date: post.date,
+    category: post.slug === 'about' ? 'archive.page' : 'nav.essays',
+    href: post.url,
+  })),
+].sort((a, b) => b.date.localeCompare(a.date) || a.href.localeCompare(b.href));
+const years = [...new Set(entries.map(entry => entry.date.slice(0, 4)))];
+const articleCount = entries.filter(entry => entry.category !== 'archive.page').length;
+---
+<BaseLayout titleKey="meta.archives.title" descriptionKey="meta.archives.description">
+  <section class="page-intro page-width narrow-intro">
+
+    <h1><T k="archive.title" /></h1>
+    <p><T k="archive.count" params={{articles:articleCount,pages:entries.length-articleCount}} /></p>
+  </section>
+  <div class="page-width listing-section">
+    {years.map(year => (
+      <section class="archive-year" aria-labelledby={`year-${year}`}>
+        <h2 id={`year-${year}`}>{year}</h2>
+        <div class="post-list">
+          {entries.filter(entry => entry.date.startsWith(year)).map(entry => (
+            <article class="post-row">
+              <a href={entry.href} class="post-row-link">
+                <time datetime={entry.date}>{entry.date}</time>
+                <div class="post-row-main"><h3>{entry.title}</h3><div class="tag-row"><T k={entry.category} /></div></div>
+                <span class="row-arrow" aria-hidden="true">↗</span>
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>
+</BaseLayout>

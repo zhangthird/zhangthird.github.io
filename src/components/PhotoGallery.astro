@@ -1,0 +1,28 @@
+---
+import { translate } from '../lib/i18n.mjs';
+import { formatDate } from '../lib/format';
+interface Photo {
+  id: string;
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  caption?: string;
+  date?: string;
+}
+interface Props { photos: Photo[] }
+const { photos } = Astro.props;
+---
+<div class="photo-grid">
+  {photos.map(photo => (
+    <figure class="photo-item" id={photo.id}>
+      <a class="photo-link" href={photo.src} target="_blank" rel="noopener noreferrer" title={translate('photos.open')} data-i18n-title="photos.open">
+        <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" />
+      </a>
+      {(photo.caption || photo.date) && <figcaption>
+        {photo.caption && <p>{photo.caption}</p>}
+        {photo.date && <time datetime={photo.date} data-i18n-date>{formatDate(new Date(photo.date))}</time>}
+      </figcaption>}
+    </figure>
+  ))}
+</div>

@@ -1,0 +1,13 @@
+dist/
+node_modules/
+.firecrawl/
+.astro/
+
+# Local maintenance notes and examples: never publish to the public repository.
+/README.md
+/docs/
+/media/README.md
+/src/content/**/_draft*.md
+.env
+.env.*
+!.env.example

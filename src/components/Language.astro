@@ -1,0 +1,16 @@
+<script>
+  import { applyLanguage, changeLanguage, preferredLanguage, currentLanguage } from '../lib/i18n.mjs';
+  const storage = (() => { try { return window.localStorage; } catch { return undefined; } })();
+  let selected = preferredLanguage(storage);
+  const refresh = () => applyLanguage(document, selected);
+  refresh();
+  document.addEventListener('astro:page-load', refresh);
+  document.addEventListener('astro:before-swap', (event) => {
+    applyLanguage((event as Event & { newDocument: Document }).newDocument, selected);
+  });
+  document.addEventListener('click', event => {
+    if (!(event.target instanceof Element) || !event.target.closest('[data-language-toggle]')) return;
+    selected = changeLanguage(document, currentLanguage() === 'en' ? 'zh' : 'en', storage);
+    document.dispatchEvent(new Event('site:language-change'));
+  });
+</script>

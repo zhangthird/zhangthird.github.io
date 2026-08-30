@@ -1,0 +1,19 @@
+---
+import { getCollection } from 'astro:content';
+import T from '../components/T.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostList from '../components/PostList.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import { legacyPosts } from '../lib/legacy';
+const research = (await getCollection('research')).filter(p => !p.data.draft).sort((a,b)=>b.data.pubDate.valueOf()-a.data.pubDate.valueOf());
+---
+<BaseLayout>
+  <h1 class="sr-only"><T k="home.title" /></h1>
+  <section class="home-section page-width">
+    <SectionHeading index="01" title="Research & Engineering" titleKey="nav.research" href="/research/" linkKey="allNotes" />
+    {research.length ? <PostList posts={research.slice(0,3)} /> : <p><T k="empty" /></p>}
+  </section>
+  <section class="home-section page-width home-essays">
+    <div><SectionHeading index="02" title="Essays" titleKey="nav.essays" /><p><T k="essayIntro" /></p><a class="quiet-link" href="/essays/"><T k="allEssays" params={{count: legacyPosts.filter(p=>p.slug !== 'about').length}} /> ↗</a></div>
+  </section>
+</BaseLayout>

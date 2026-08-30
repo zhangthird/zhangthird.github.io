@@ -1,0 +1,37 @@
+{
+  "name": "zhangthird-homepage",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prebuild": "node scripts/sanitize-photos.mjs",
+    "predev": "node scripts/sanitize-photos.mjs",
+    "photos:clean": "node scripts/sanitize-photos.mjs",
+    "build": "astro build && node scripts/legacy-output.mjs && pagefind --site dist",
+    "dev": "astro dev --host 127.0.0.1 --port 4321",
+    "preview": "node scripts/serve.mjs",
+    "test": "node --test tests/site.test.mjs",
+    "check": "astro check",
+    "new:post": "node scripts/new-post.mjs",
+    "new:research": "node scripts/new-post.mjs research",
+    "delete:research": "node scripts/delete-post.mjs research",
+    "delete:post": "node scripts/delete-post.mjs"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "^7.2.4",
+    "astro": "^7.2.4",
+    "katex": "^0.18.4",
+    "pagefind": "^1.5.2",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "sharp": "0.35.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^22.20.1",
+    "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

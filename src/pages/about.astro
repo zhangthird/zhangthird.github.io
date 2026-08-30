@@ -1,0 +1,17 @@
+---
+import T from '../components/T.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../lib/site';
+---
+<BaseLayout titleKey="meta.about.title" descriptionKey="meta.about.description">
+  <section class="page-intro page-width narrow-intro"><h1><T k="nav.about" /></h1></section>
+  <div class="page-width about-page"><div class="about-content">
+    <div class="prose-lite">
+    <p><T k="about.bio" /></p>
+    </div>
+    <dl class="about-links">
+      <div><dt>GitHub</dt><dd><a href={SITE.github}>@zhangthird ↗</a></dd></div>
+      <div><dt><T k="email" /></dt><dd><a href={`mailto:${SITE.email}`}>{SITE.email}</a></dd></div>
+    </dl>
+  </div></div>
+</BaseLayout>

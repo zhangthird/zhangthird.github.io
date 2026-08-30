@@ -1,0 +1,20 @@
+---
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import T from '../components/T.astro';
+import PhotoGallery from '../components/PhotoGallery.astro';
+import entries from '../data/photos.json';
+import { preparePhotos } from '../lib/photos.mjs';
+
+const photos = preparePhotos(entries);
+for (const photo of photos) {
+  if (!existsSync(resolve('public', `.${photo.src}`))) throw new Error(`Missing photo: ${photo.src}`);
+}
+---
+<BaseLayout titleKey="meta.photos.title" descriptionKey="meta.photos.description">
+  <section class="page-intro page-width narrow-intro"><h1><T k="nav.photos" /></h1></section>
+  <section class="page-width listing-section">
+    {photos.length ? <PhotoGallery photos={photos} /> : <p class="photos-empty"><T k="photos.empty" /></p>}
+  </section>
+</BaseLayout>

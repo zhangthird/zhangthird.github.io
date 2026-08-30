@@ -1,0 +1,14 @@
+---
+import T from './T.astro';
+import { SITE } from '../lib/site';
+---
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p>© {new Date().getFullYear()} {SITE.name}</p>
+    <div class="footer-links">
+      <a href="/archives/"><T k="nav.archives" /></a>
+      <a href="/rss.xml">RSS</a>
+    </div>
+  </div>
+</footer>

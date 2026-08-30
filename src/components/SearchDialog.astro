@@ -1,0 +1,23 @@
+---
+import T from './T.astro';
+import { translate } from '../lib/i18n.mjs';
+---
+<dialog id="search-dialog" class="search-dialog" aria-label={translate('search.title')} data-i18n-aria-label="search.title">
+  <div class="search-panel">
+    <div class="search-topline">
+      <label for="site-search"><T k="search.title" /></label>
+      <button id="search-close" class="dialog-close" type="button" aria-label={translate('search.close')} data-i18n-aria-label="search.close">Esc</button>
+    </div>
+    <input
+      id="site-search"
+      class="search-input"
+      type="search"
+      placeholder={translate('search.placeholder')}
+      data-i18n-placeholder="search.placeholder"
+      autocomplete="off"
+    />
+    <p id="search-status" class="search-status" role="status" data-i18n="search.start">{translate('search.start')}</p>
+    <a class="search-fallback" href="/search/"><T k="search.page" /> ↗</a>
+    <div id="search-results" class="search-results" aria-live="polite"></div>
+  </div>
+</dialog>

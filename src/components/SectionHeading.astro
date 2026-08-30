@@ -1,0 +1,17 @@
+---
+import T from './T.astro';
+interface Props {
+  title: string;
+  titleKey?: string;
+  index?: string;
+  href?: string;
+  linkText?: string;
+  linkKey?: string;
+}
+const { title, titleKey, index, href, linkKey, linkText = 'View all' } = Astro.props;
+---
+
+<div class="section-heading">
+  <h2>{index && <span class="section-index" aria-hidden="true">{index}</span>}{titleKey ? <T k={titleKey} /> : title}</h2>
+  {href && <a href={href}>{linkKey ? <T k={linkKey} /> : linkText} <span aria-hidden="true">→</span></a>}
+</div>

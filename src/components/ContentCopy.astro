@@ -1,0 +1,10 @@
+<content-copy><p class="sr-only" data-copy-status role="status" aria-live="polite" data-pagefind-ignore></p></content-copy>
+<script>
+  import { setupContentCopy } from '../lib/content-copy.mjs';
+  class ContentCopy extends HTMLElement {
+    cleanup?: () => void;
+    connectedCallback() { this.cleanup?.(); this.cleanup = setupContentCopy(this); }
+    disconnectedCallback() { this.cleanup?.(); }
+  }
+  if (!customElements.get('content-copy')) customElements.define('content-copy', ContentCopy);
+</script>

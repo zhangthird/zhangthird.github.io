@@ -1,0 +1,10 @@
+---
+import T from '../components/T.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { legacyPosts } from '../lib/legacy';
+const posts = legacyPosts.filter(p=>p.slug !== 'about');
+---
+<BaseLayout titleKey="meta.essays.title" descriptionKey="meta.essays.description">
+  <section class="page-intro page-width narrow-intro"><h1><T k="nav.essays" /></h1></section>
+  <section class="page-width listing-section"><div class="archive-heading"><span>2022</span><T k="article.count" params={{count:posts.length}} /></div><div class="post-list">{posts.map(p=><article class="post-row"><a class="post-row-link" href={p.url}><time datetime={p.date}>{p.date}</time><div class="post-row-main"><h3 lang="zh-CN">{p.title}</h3><p lang="zh-CN">{p.text.slice(0,85)}{p.text.length>85?'…':''}</p></div><span class="row-arrow" aria-hidden="true">↗</span></a></article>)}</div></section>
+</BaseLayout>

@@ -1,0 +1,13 @@
+---
+import T from '../components/T.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="404 — Cheng Cui">
+  <section class="not-found page-width">
+    <div class="eyebrow">404</div>
+    <h1><T k="notFound.title" /></h1>
+    <p><T k="notFound.body" /></p>
+    <a class="primary-link" href="/"><T k="notFound.home" /> →</a>
+  </section>
+</BaseLayout>

@@ -1,0 +1,39 @@
+---
+import { translate } from '../lib/i18n.mjs';
+import T from './T.astro';
+import { NAV, SITE } from '../lib/site';
+const { pathname } = Astro.url;
+---
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="/" aria-label={translate("nav.home")} data-i18n-aria-label="nav.home">
+      <span class="brand-brace">{`{`}</span>
+      <span>{SITE.name}</span>
+      <span class="brand-brace">{`}`}</span>
+    </a>
+
+    <nav class="main-nav" aria-label={translate("nav.primary")} data-i18n-aria-label="nav.primary">
+      {NAV.map((item) => (
+        <a
+          href={item.href}
+          data-i18n={item.key}
+          class:list={{ active: pathname === item.href || pathname.startsWith(item.href) }}
+          aria-current={pathname.startsWith(item.href) ? 'page' : undefined}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="header-actions">
+      <button type="button" class="icon-button language-button" data-language-toggle aria-label={translate("language.label")} data-i18n-aria-label="language.label"><T k="language.toggle" /></button>
+      <button id="search-trigger" class="icon-button search-button" type="button" aria-label={translate("search.label")} data-i18n-aria-label="search.label">
+        <span aria-hidden="true">⌘K</span>
+      </button>
+      <button id="theme-toggle" class="icon-button" type="button" aria-label={translate("theme.dark")} data-i18n-aria-label="theme.dark">
+        <span class="theme-icon" aria-hidden="true">◐</span>
+      </button>
+    </div>
+  </div>
+</header>

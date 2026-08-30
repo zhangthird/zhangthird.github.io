@@ -1,0 +1,241 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import SearchDialog from '../components/SearchDialog.astro';
+import ContentCopy from '../components/ContentCopy.astro';
+import Language from '../components/Language.astro';
+import T from '../components/T.astro';
+import { translate } from '../lib/i18n.mjs';
+import { SITE } from '../lib/site';
+import '../styles/global.css';
+import 'katex/dist/katex.min.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string | null;
+  type?: 'website' | 'article';
+  titleKey?: string;
+  descriptionKey?: string;
+}
+
+const {
+  title = SITE.title,
+  description = SITE.description,
+  image = '/og.svg',
+  type = 'website',
+  titleKey = Astro.props.title ? undefined : 'meta.home.title',
+  descriptionKey = Astro.props.description ? undefined : 'meta.home.description',
+} = Astro.props;
+const pageTitle = titleKey ? translate(titleKey) : title;
+const pageDescription = descriptionKey ? translate(descriptionKey) : description;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
+const socialImage = image ? new URL(image, Astro.site ?? 'https://zhangthird.github.io') : null;
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#fafafa" />
+    <title data-i18n={titleKey}>{pageTitle}</title>
+    <meta name="description" content={pageDescription} data-i18n-content={descriptionKey} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title={`${SITE.name} RSS`} href="/rss.xml" />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={pageTitle} data-i18n-content={titleKey} />
+    <meta property="og:description" content={pageDescription} data-i18n-content={descriptionKey} />
+    <meta property="og:url" content={canonical} />
+    {socialImage && <meta property="og:image" content={socialImage} />}
+    <meta name="twitter:card" content={socialImage ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={pageTitle} data-i18n-content={titleKey} />
+    <meta name="twitter:description" content={pageDescription} data-i18n-content={descriptionKey} />
+    {socialImage && <meta name="twitter:image" content={socialImage} />}
+    <script is:inline>
+      (() => {
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        let saved; try { saved = localStorage.getItem('theme'); } catch {}
+        document.documentElement.dataset.theme = saved === 'light' || saved === 'dark' ? saved : (systemDark ? 'dark' : 'light');
+        try { document.documentElement.lang = localStorage.getItem('site-language') === 'zh' ? 'zh-CN' : 'en'; } catch {}
+      })();
+    </script>
+    <ClientRouter fallback="swap" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content"><T k="skip" /></a>
+    <div class="site-shell">
+      <Header />
+      <main id="main-content" data-pagefind-body>
+        <slot />
+      </main>
+      <Footer />
+    </div>
+    <SearchDialog />
+    <ContentCopy />
+    <Language />
+
+    <script>
+      import { setMessage, translate, currentLanguage } from '../lib/i18n.mjs';
+      function escapeHtml(value: unknown) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;');
+      }
+
+      function bindInteractions() {
+        const root = document.documentElement;
+        const runtime = window as Window & { __siteShortcutBound?: boolean; __sitePointerBound?: boolean; __demoObserver?: IntersectionObserver };
+        let savedTheme; try { savedTheme = localStorage.getItem('theme'); } catch {}
+        if (savedTheme === 'light' || savedTheme === 'dark') root.dataset.theme = savedTheme;
+        const themeButton = document.querySelector<HTMLButtonElement>('#theme-toggle');
+        const syncTheme = () => {
+          const dark = root.dataset.theme === 'dark';
+          const key = dark ? 'theme.light' : 'theme.dark';
+          themeButton?.setAttribute('data-i18n-aria-label', key);
+          themeButton?.setAttribute('aria-label', translate(key, currentLanguage()));
+          themeButton?.setAttribute('aria-pressed', String(dark));
+        };
+        syncTheme();
+        if (themeButton && !themeButton.dataset.bound) {
+          themeButton.dataset.bound = 'true';
+          themeButton.addEventListener('click', () => {
+            const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+            root.dataset.theme = next;
+            try { localStorage.setItem('theme', next); } catch {}
+            syncTheme();
+          });
+        }
+
+        const dialog = document.querySelector<HTMLDialogElement>('#search-dialog');
+        const trigger = document.querySelector<HTMLButtonElement>('#search-trigger');
+        const close = document.querySelector<HTMLButtonElement>('#search-close');
+        const input = document.querySelector<HTMLInputElement>('#site-search');
+        const status = document.querySelector<HTMLElement>('#search-status');
+        const results = document.querySelector<HTMLElement>('#search-results');
+
+        const openSearch = () => {
+          if (!dialog?.open) dialog?.showModal();
+          window.setTimeout(() => input?.focus(), 30);
+        };
+
+        if (trigger && !trigger.dataset.bound) {
+          trigger.dataset.bound = 'true';
+          trigger.addEventListener('click', openSearch);
+        }
+        if (close && !close.dataset.bound) {
+          close.dataset.bound = 'true';
+          close.addEventListener('click', () => dialog?.close());
+        }
+        if (dialog && !dialog.dataset.bound) {
+          dialog.dataset.bound = 'true';
+          dialog.addEventListener('click', (event) => {
+            if (event.target === dialog) dialog.close();
+          });
+        }
+
+        if (!runtime.__siteShortcutBound) {
+          runtime.__siteShortcutBound = true;
+          document.addEventListener('keydown', (event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+              event.preventDefault();
+              const currentDialog = document.querySelector<HTMLDialogElement>('#search-dialog');
+              const currentInput = document.querySelector<HTMLInputElement>('#site-search');
+              if (!currentDialog?.open) currentDialog?.showModal();
+              window.setTimeout(() => currentInput?.focus(), 30);
+            }
+          });
+        }
+
+        let searchTimer: number | undefined;
+        let searchVersion = 0;
+        if (input && !input.dataset.bound) {
+          input.dataset.bound = 'true';
+          input.addEventListener('input', () => {
+            const version = ++searchVersion;
+            window.clearTimeout(searchTimer);
+            searchTimer = window.setTimeout(async () => {
+              const query = input.value.trim();
+              if (!status || !results) return;
+              if (!query) {
+                setMessage(status, 'search.start');
+                results.innerHTML = '';
+                return;
+              }
+
+              setMessage(status, 'search.loading');
+              try {
+                const indexPath = '/pagefind/pagefind.js';
+                const pagefind = await import(/* @vite-ignore */ indexPath);
+                const response = await pagefind.search(query);
+                const items = await Promise.all(
+                  response.results.slice(0, 8).map((result: any) => result.data()),
+                );
+                if (version !== searchVersion || !input.isConnected) return;
+
+                if (!items.length) {
+                  setMessage(status, 'search.none');
+                  results.innerHTML = '';
+                  return;
+                }
+
+                setMessage(status, response.results.length > 8 ? 'search.resultsLimited' : 'search.results', {count:response.results.length});
+                results.innerHTML = items
+                  .map(
+                    (item: any) => `
+                      <a class="search-result" href="${escapeHtml(item.url)}">
+                        <strong>${escapeHtml(item.meta?.title || item.url)}</strong>
+                        <span>${escapeHtml((item.excerpt || '').replace(/<[^>]*>/g, ''))}</span>
+                      </a>
+                    `,
+                  )
+                  .join('');
+              } catch {
+                if (version !== searchVersion || !input.isConnected) return;
+                setMessage(status, 'search.error');
+                results.innerHTML = '';
+              }
+            }, 120);
+          });
+        }
+
+        if (!runtime.__sitePointerBound) {
+          runtime.__sitePointerBound = true;
+          window.addEventListener('pointermove', (event) => {
+            document.documentElement.style.setProperty('--pointer-x', `${event.clientX}px`);
+            document.documentElement.style.setProperty('--pointer-y', `${event.clientY}px`);
+          }, { passive: true });
+        }
+
+        runtime.__demoObserver?.disconnect();
+        const demoVideos = Array.from(document.querySelectorAll<HTMLVideoElement>('video.demo-video[data-autoplay-demo]'));
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduceMotion) {
+          demoVideos.forEach((video) => video.pause());
+        } else if (demoVideos.length) {
+          runtime.__demoObserver = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+              const video = entry.target as HTMLVideoElement;
+              if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
+                void video.play().catch(() => {});
+              } else {
+                video.pause();
+              }
+            }
+          }, { threshold: [0, 0.55, 1] });
+          demoVideos.forEach((video) => runtime.__demoObserver?.observe(video));
+        }
+      }
+
+      bindInteractions();
+      document.addEventListener('astro:page-load', bindInteractions);
+      document.addEventListener('site:language-change', bindInteractions);
+    </script>
+  </body>
+</html>
