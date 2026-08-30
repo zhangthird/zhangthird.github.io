@@ -3,4 +3,4 @@ import { translate } from '../lib/i18n.mjs';
 interface Props { k: string; params?: Record<string, string | number> }
 const { k, params = {} } = Astro.props;
 ---
-<span data-i18n={k} data-i18n-params={Object.keys(params).length ? JSON.stringify(params) : undefined}>{translate(k, 'en', params)}</span>
+<span translate="no" data-site-i18n={k} data-site-i18n-params={Object.keys(params).length ? JSON.stringify(params) : undefined}>{translate(k, 'en', params)}</span>

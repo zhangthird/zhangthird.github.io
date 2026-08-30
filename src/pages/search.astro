@@ -10,8 +10,8 @@ const entries=[...posts.map(p=>({title:p.data.title,description:p.data.descripti
 <BaseLayout titleKey="meta.search.title" descriptionKey="meta.search.description">
   <section class="page-intro page-width narrow-intro">
     <h1><T k="search.title" /></h1>
-    <label class="standalone-search"><T k="search.keywords" /><input type="search" id="archive-search" placeholder={translate('search.placeholder')} data-i18n-placeholder="search.placeholder" /></label>
-    <p id="search-count" role="status" aria-live="polite" data-i18n="article.count" data-i18n-params={JSON.stringify({count:entries.length})}>{translate('article.count','en',{count:entries.length})}</p>
+    <label class="standalone-search"><T k="search.keywords" /><input type="search" id="archive-search" placeholder={translate('search.placeholder')} data-site-i18n-placeholder="search.placeholder" /></label>
+    <p id="search-count" role="status" aria-live="polite" data-site-i18n="article.count" data-site-i18n-params={JSON.stringify({count:entries.length})}>{translate('article.count','en',{count:entries.length})}</p>
   </section>
   <section class="page-width listing-section"><div class="post-list">{entries.map(e=><article class="post-row searchable-row" data-text={e.text.toLowerCase()}><a href={e.url} class="post-row-link"><span class="mini-label"><T k="search.note" /></span><div class="post-row-main"><h3>{e.title}</h3><p>{e.description}</p></div><span aria-hidden="true">↗</span></a></article>)}</div><p id="no-results" hidden><T k="search.none" /></p></section>
 </BaseLayout>

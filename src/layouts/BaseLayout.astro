@@ -41,19 +41,19 @@ const socialImage = image ? new URL(image, Astro.site ?? 'https://zhangthird.git
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content="#fafafa" />
-    <title data-i18n={titleKey}>{pageTitle}</title>
-    <meta name="description" content={pageDescription} data-i18n-content={descriptionKey} />
+    <title data-site-i18n={titleKey}>{pageTitle}</title>
+    <meta name="description" content={pageDescription} data-site-i18n-content={descriptionKey} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title={`${SITE.name} RSS`} href="/rss.xml" />
     <meta property="og:type" content={type} />
-    <meta property="og:title" content={pageTitle} data-i18n-content={titleKey} />
-    <meta property="og:description" content={pageDescription} data-i18n-content={descriptionKey} />
+    <meta property="og:title" content={pageTitle} data-site-i18n-content={titleKey} />
+    <meta property="og:description" content={pageDescription} data-site-i18n-content={descriptionKey} />
     <meta property="og:url" content={canonical} />
     {socialImage && <meta property="og:image" content={socialImage} />}
     <meta name="twitter:card" content={socialImage ? 'summary_large_image' : 'summary'} />
-    <meta name="twitter:title" content={pageTitle} data-i18n-content={titleKey} />
-    <meta name="twitter:description" content={pageDescription} data-i18n-content={descriptionKey} />
+    <meta name="twitter:title" content={pageTitle} data-site-i18n-content={titleKey} />
+    <meta name="twitter:description" content={pageDescription} data-site-i18n-content={descriptionKey} />
     {socialImage && <meta name="twitter:image" content={socialImage} />}
     <script is:inline>
       (() => {
@@ -98,7 +98,7 @@ const socialImage = image ? new URL(image, Astro.site ?? 'https://zhangthird.git
         const syncTheme = () => {
           const dark = root.dataset.theme === 'dark';
           const key = dark ? 'theme.light' : 'theme.dark';
-          themeButton?.setAttribute('data-i18n-aria-label', key);
+          themeButton?.setAttribute('data-site-i18n-aria-label', key);
           themeButton?.setAttribute('aria-label', translate(key, currentLanguage()));
           themeButton?.setAttribute('aria-pressed', String(dark));
         };

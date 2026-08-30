@@ -36,9 +36,9 @@ export function setupContentCopy(host) {
     button.setAttribute('data-pagefind-ignore', '');
     const label = math ? 'math.tex' : 'code.copy';
     const hint = math ? 'math.hint' : 'code.copy';
-    button.setAttribute('data-i18n-aria-label', label);
+    button.setAttribute('data-site-i18n-aria-label', label);
     button.setAttribute('aria-label', translate(label, currentLanguage(doc)));
-    button.setAttribute('data-i18n-title', hint);
+    button.setAttribute('data-site-i18n-title', hint);
     button.setAttribute('title', translate(hint, currentLanguage(doc)));
     const icon = doc.createElement('span');
     icon.setAttribute('aria-hidden', 'true');
@@ -73,7 +73,7 @@ export function setupContentCopy(host) {
           fallback.readOnly = true;
           fallback.rows = 2;
           fallback.setAttribute('data-pagefind-ignore', '');
-          fallback.setAttribute('data-i18n-aria-label', 'copy.source');
+          fallback.setAttribute('data-site-i18n-aria-label', 'copy.source');
           fallback.setAttribute('aria-label', translate('copy.source', currentLanguage(doc)));
           region.append(fallback);
         }

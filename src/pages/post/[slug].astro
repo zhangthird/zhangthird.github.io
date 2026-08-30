@@ -11,6 +11,6 @@ const { post } = Astro.props;
   <article class="article-wrap page-width">
     <header class="article-header"><a class="back-link" href="/essays/">← <T k="nav.essays" /></a><h1 lang="zh-CN" data-pagefind-meta="title">{post.title}</h1><div class="article-meta"><time datetime={post.date}>{post.date}</time><T k="article.legacy" /><T k="article.readingTime" params={{count:post.minutes}} /></div></header>
     {post.slug==='about' && <p class="legacy-notice"><T k="article.written" params={{date:post.date}} /> <a href="/about/"><T k="nav.about" /> →</a></p>}
-    <div class="article-grid"><div class="prose" lang="zh-CN" set:html={post.body} />{post.headings.length>0 && <aside class="toc" aria-label={translate("contents")} data-i18n-aria-label="contents" data-pagefind-ignore><div class="toc-label"><T k="contents" /></div><nav>{post.headings.map(h=><a class:list={{nested:h.depth===3}} href={`#${h.id}`}>{h.text}</a>)}</nav></aside>}</div>
+    <div class="article-grid"><div class="prose" lang="zh-CN" set:html={post.body} />{post.headings.length>0 && <aside class="toc" aria-label={translate("contents")} data-site-i18n-aria-label="contents" data-pagefind-ignore><div class="toc-label"><T k="contents" /></div><nav>{post.headings.map(h=><a class:list={{nested:h.depth===3}} href={`#${h.id}`}>{h.text}</a>)}</nav></aside>}</div>
   </article>
 </BaseLayout>

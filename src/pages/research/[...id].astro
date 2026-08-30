@@ -31,7 +31,7 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
       <h1 lang="en" data-pagefind-meta="title">{post.data.title}</h1>
       <p lang="en" class="article-deck">{post.data.description}</p>
       <div class="article-meta">
-        <time data-i18n-date datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+        <time data-site-i18n-date datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
         {post.data.readingTime && <T k="article.readingTime" params={{count:parseInt(post.data.readingTime)}} />}
         {post.data.tags.map((tag) => <span class="article-tag">{tag}</span>)}
       </div>
@@ -43,7 +43,7 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
       </div>
 
       {toc.length > 0 && (
-        <aside class="toc" aria-label={translate("contents")} data-i18n-aria-label="contents" data-pagefind-ignore>
+        <aside class="toc" aria-label={translate("contents")} data-site-i18n-aria-label="contents" data-pagefind-ignore>
           <div class="toc-label"><T k="contents" /></div>
           <nav>
             {toc.map((heading) => (

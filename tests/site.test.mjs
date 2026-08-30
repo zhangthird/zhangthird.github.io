@@ -165,7 +165,7 @@ test('Writing merges into research with canonical routes and no duplicate listin
   assert.doesNotMatch(nav,/Writing/);
   const article=read('research/react-agent-loop/index.html');
   assert.match(article,/<link rel="canonical" href="https:\/\/zhangthird.github.io\/research\/react-agent-loop\/"/);
-  assert.match(article,/← <span[^>]+data-i18n="nav.research"[^>]*>Research &amp; Engineering/);
+  assert.match(article,/← <span[^>]+data-site-i18n="nav.research"[^>]*>Research &amp; Engineering/);
   assert.ok(existsSync('src/content/research/react-agent-loop.md'));
   assert.ok(!existsSync('src/content/writing/react-agent-loop.md'));
 });
@@ -325,7 +325,7 @@ test('every UI translation has both languages and all page keys exist',()=>{
     const html=readFileSync(file,'utf8');
     if(/http-equiv="refresh"/i.test(html))continue;
     assert.match(html,/data-language-toggle/);
-    for(const key of html.matchAll(/data-i18n(?:-(?:aria-label|placeholder|title|content))?="([^"]+)"/g))assert.ok(messages[key[1]],`${file}: ${key[1]}`);
+    for(const key of html.matchAll(/data-site-i18n(?:-(?:aria-label|placeholder|title|content))?="([^"]+)"/g))assert.ok(messages[key[1]],`${file}: ${key[1]}`);
   }
   for(const file of ['index.html','research/index.html','about/index.html','projects/index.html','404.html']){
     const text=read(file).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'').replace(/<button\b[^>]*data-language-toggle[^>]*>[\s\S]*?<\/button>/g,'').replace(/<[^>]*>/g,'');
@@ -343,11 +343,11 @@ function localeFixture(){
     const attribute=selector.match(/\[([^\]]+)\]/)?.[1];
     return doc.elements.filter(element=>Object.hasOwn(element.attrs,attribute));
   };
-  const title=add({'data-i18n':'meta.about.title'});
-  const count=add({'data-i18n':'article.count','data-i18n-params':'{"count":3}'});
-  const input=add({'data-i18n-placeholder':'search.placeholder','data-i18n-aria-label':'search.label'});
-  const meta=add({'data-i18n-content':'meta.about.description'});
-  const date=add({'data-i18n-date':'',datetime:'2026-08-21T00:00:00.000Z'});
+  const title=add({'data-site-i18n':'meta.about.title'});
+  const count=add({'data-site-i18n':'article.count','data-site-i18n-params':'{"count":3}'});
+  const input=add({'data-site-i18n-placeholder':'search.placeholder','data-site-i18n-aria-label':'search.label'});
+  const meta=add({'data-site-i18n-content':'meta.about.description'});
+  const date=add({'data-site-i18n-date':'',datetime:'2026-08-21T00:00:00.000Z'});
   const article=add({},'原始文章 body must not change');
   const status=add();
   return {doc,title,count,input,meta,date,article,status};
@@ -393,6 +393,62 @@ test('language preference survives a new document and blocked storage stays usab
   assert.equal(next.title.textContent,'About — Cheng Cui');
   assert.equal(normalizeLanguage('fr'),'en');
   assert.equal(translate('article.count','en',{count:1}),'1 article');
+});
+
+test('language refresh does not replace unchanged text nodes',()=>{
+  const f=localeFixture();
+  applyLanguage(f.doc,'en');
+  let writes=0;
+  for(const element of f.doc.elements){
+    let value=element.textContent;
+    Object.defineProperty(element,'textContent',{get:()=>value,set:next=>{writes++;value=next;}});
+  }
+  applyLanguage(f.doc,'en');
+  applyLanguage(f.doc,'en');
+  assert.equal(writes,0,'opening and re-entering the same language preserves existing DOM text');
+  applyLanguage(f.doc,'zh');
+  assert.ok(writes>0);
+  const previous=writes;
+  applyLanguage(f.doc,'zh');
+  assert.equal(writes,previous);
+});
+
+test('a broken translation entry cannot erase server text or interrupt other labels',()=>{
+  const f=localeFixture();
+  f.title.attrs['data-site-i18n']='unknown.key';
+  f.title.textContent='About — Cheng Cui';
+  f.count.attrs['data-site-i18n-params']='{bad json';
+  f.input.attrs['data-site-i18n-placeholder']='unknown.placeholder';
+  f.input.attrs.placeholder='Search';
+  f.date.attrs.datetime='invalid';
+  f.date.textContent='Aug 21, 2026';
+  assert.doesNotThrow(()=>applyLanguage(f.doc,'zh'));
+  assert.equal(f.title.textContent,'About — Cheng Cui');
+  assert.equal(f.input.attrs.placeholder,'Search');
+  assert.equal(f.date.textContent,'Aug 21, 2026');
+  assert.equal(f.meta.attrs.content,'Cheng Cui 的研究兴趣与联系方式。');
+});
+
+test('third-party generic translation markers cannot select website UI labels',()=>{
+  const f=localeFixture();
+  const foreign={attrs:{'data-i18n':'nav.research'},textContent:'Unrelated widget'};
+  f.doc.elements.push(foreign);
+  assert.deepEqual(f.doc.querySelectorAll('[data-i18n]'),[foreign]);
+  applyLanguage(f.doc,'zh');
+  assert.equal(foreign.textContent,'Unrelated widget');
+  assert.equal(f.title.textContent,'关于 — Cheng Cui');
+});
+
+test('navigation, language button and section titles have nonempty server-rendered fallback text',()=>{
+  for(const file of pages){
+    const html=readFileSync(file,'utf8');
+    if(/http-equiv="refresh"/i.test(html))continue;
+    assert.doesNotMatch(html,/\bdata-i18n(?:[=\s-])/);
+    const nav=html.match(/<nav[^>]*class="main-nav"[\s\S]*?<\/nav>/)[0];
+    for(const label of ['Research &amp; Engineering','Projects','Essays','Photos','About'])assert.ok(nav.includes(label),file+': '+label);
+    for(const label of nav.matchAll(/<a\b([^>]+)>/g))assert.match(label[1],/translate="no"/);
+    assert.match(html,/<span translate="no" data-site-i18n="language.toggle"[^>]*>中<\/span>/);
+  }
 });
 
 test('Photos is a separate bilingual route between Essays and About',()=>{

@@ -102,24 +102,38 @@ export function preferredLanguage(storage, fallback = 'en') {
 }
 export function setMessage(element, key, params = {}) {
   if (!element) return;
-  element.setAttribute('data-i18n', key);
-  element.setAttribute('data-i18n-params', JSON.stringify(params));
+  element.setAttribute('data-site-i18n', key);
+  element.setAttribute('data-site-i18n-params', JSON.stringify(params));
   element.textContent = key ? translate(key, currentLanguage(element.ownerDocument), params) : '';
 }
 export function applyLanguage(doc, language) {
   const locale = normalizeLanguage(language);
   doc.documentElement.lang = locale === 'zh' ? 'zh-CN' : 'en';
-  for (const element of doc.querySelectorAll('[data-i18n]')) {
-    const key = element.getAttribute('data-i18n');
-    if (key) element.textContent = translate(key, locale, JSON.parse(element.getAttribute('data-i18n-params') || '{}'));
+  for (const element of doc.querySelectorAll('[data-site-i18n]')) {
+    const key = element.getAttribute('data-site-i18n');
+    // Preserve server-rendered text for unknown keys and unchanged text nodes.
+    if (!Object.hasOwn(messages, key)) continue;
+    let params = {};
+    try {
+      const parsed = JSON.parse(element.getAttribute('data-site-i18n-params') || '{}');
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) params = parsed;
+    } catch { /* One malformed parameter must not break the whole UI. */ }
+    const text = translate(key, locale, params);
+    if (text && element.textContent !== text) element.textContent = text;
   }
   for (const attr of ['aria-label', 'placeholder', 'title', 'content']) {
-    for (const element of doc.querySelectorAll(`[data-i18n-${attr}]`)) {
-      element.setAttribute(attr, translate(element.getAttribute(`data-i18n-${attr}`), locale));
+    for (const element of doc.querySelectorAll(`[data-site-i18n-${attr}]`)) {
+      const key = element.getAttribute(`data-site-i18n-${attr}`);
+      if (!Object.hasOwn(messages, key)) continue;
+      const text = translate(key, locale);
+      if (element.getAttribute(attr) !== text) element.setAttribute(attr, text);
     }
   }
-  for (const element of doc.querySelectorAll('time[data-i18n-date]')) {
-    element.textContent = new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en', {year:'numeric',month:'short',day:'2-digit',timeZone:'UTC'}).format(new Date(element.getAttribute('datetime')));
+  for (const element of doc.querySelectorAll('time[data-site-i18n-date]')) {
+    const date = new Date(element.getAttribute('datetime'));
+    if (Number.isNaN(date.getTime())) continue;
+    const text = new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en', {year:'numeric',month:'short',day:'2-digit',timeZone:'UTC'}).format(date);
+    if (element.textContent !== text) element.textContent = text;
   }
 }
 export function changeLanguage(doc, language, storage) {
