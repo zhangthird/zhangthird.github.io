@@ -1,13 +1,19 @@
-name: Deploy personal website
+name: Build, test and deploy personal website
+
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: read
+
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,9 +28,12 @@ jobs:
       - run: npm run build
       - run: npm test
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           path: dist
+
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     permissions:
       pages: write
