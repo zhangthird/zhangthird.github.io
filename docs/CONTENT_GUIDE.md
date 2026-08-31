@@ -86,11 +86,11 @@ $$
 
 ## 5. 代码块
 
-```markdown
+````markdown
 ```python
 print("hello")
 ```
-```
+````
 
 构建时由 Shiki 高亮。
 
