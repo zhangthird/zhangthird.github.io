@@ -12,9 +12,10 @@ const posts = (await getCollection('research'))
   <section class="page-intro page-width narrow-intro">
     <h1><T k="nav.research" /></h1>
     <p><T k="researchIntro" /></p>
-    <a class="quiet-link" href="/tags/"><T k="tags.title" /> →</a>
+    <a class="quiet-link" href="/research/topics/"><T k="tags.title" /> →</a>
   </section>
   <section class="page-width listing-section">
     {posts.length ? <PostList posts={posts} /> : <p><T k="empty" /></p>}
   </section>
 </BaseLayout>
+

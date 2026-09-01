@@ -86,6 +86,7 @@ test('search index, RSS, original Atom feed and sitemap are generated',()=>{
   const sitemap=read('sitemap.xml');
   for(const slug of legacySlugs)assert.ok(sitemap.includes(`/post/${slug}/`));
   assert.ok(sitemap.includes('/research/react-agent-loop/'));
+  assert.ok(sitemap.includes('/research/topics/'));
 });
 test('old section routes still resolve',()=>{
   for(const path of ['tags/index.html','friends/index.html','search/index.html','404.html'])assert.ok(existsSync(join(root,path)),path);
@@ -125,13 +126,17 @@ test('project pages do not list repositories without publicly verifiable contrib
 });
 test('research topics have stable pages and tags link to their matching notes',()=>{
   const tagHelper=readFileSync('src/lib/tags.ts','utf8');
-  const directory=readFileSync('src/pages/tags/index.astro','utf8');
-  const detail=readFileSync('src/pages/tags/[tag].astro','utf8');
+  const directory=readFileSync('src/pages/research/topics/index.astro','utf8');
+  const detail=readFileSync('src/pages/research/topics/[tag].astro','utf8');
   const list=readFileSync('src/components/PostList.astro','utf8');
   assert.match(tagHelper,/export function tagHref/);
+  assert.match(tagHelper,/\/research\/topics\//);
   assert.match(directory,/collectTags\(posts\)/);
   assert.match(detail,/getStaticPaths/);
   assert.match(list,/href=\{tagHref\(tag\)\}/);
+  const researchPage=readFileSync('src/pages/research.astro','utf8');
+  assert.match(researchPage,/href="\/research\/topics\/"/);
+  assert.doesNotMatch(researchPage,/href="\/tags\/"/);
   assert.match(readFileSync('src/content/research/react-agent-loop.md','utf8'),/tags: \["Agent"/);
   assert.match(readFileSync('src/content/research/pid-lagrangian-rl.md','utf8'),/"RL"/);
 });

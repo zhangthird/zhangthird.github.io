@@ -9,7 +9,7 @@ export function tagSlug(tag: string) {
 }
 
 export function tagHref(tag: string) {
-  return `/tags/${tagSlug(tag)}/`;
+  return `/research/topics/${tagSlug(tag)}/`;
 }
 
 export function collectTags(posts: CollectionEntry<'research'>[]) {
@@ -26,3 +26,4 @@ export function collectTags(posts: CollectionEntry<'research'>[]) {
     .map(([slug, tag]) => ({ slug, ...tag }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 }
+

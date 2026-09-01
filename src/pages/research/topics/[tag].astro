@@ -1,9 +1,9 @@
 ---
 import { getCollection, type CollectionEntry } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import PostList from '../../components/PostList.astro';
-import T from '../../components/T.astro';
-import { collectTags, tagSlug } from '../../lib/tags';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PostList from '../../../components/PostList.astro';
+import T from '../../../components/T.astro';
+import { collectTags, tagSlug } from '../../../lib/tags';
 
 export async function getStaticPaths() {
   const posts = (await getCollection('research')).filter((post) => !post.data.draft);
@@ -18,16 +18,21 @@ const { tagName } = Astro.props;
 const posts = (await getCollection('research'))
   .filter((post): post is CollectionEntry<'research'> => !post.data.draft && post.data.tags.some((tag) => tagSlug(tag) === tagSlug(tagName)))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-const tagPath = `/tags/${tagSlug(tagName)}/`;
+const tagPath = `/research/topics/${tagSlug(tagName)}/`;
 ---
 
 <BaseLayout
-  title={`${tagName} — Topics — Cheng Cui`}
+  title={`${tagName} — Research Topics — Cheng Cui`}
   description={`Research notes tagged ${tagName}.`}
-  breadcrumbs={[{ name: 'Home', href: '/' }, { name: 'Topics', href: '/tags/' }, { name: tagName, href: tagPath }]}
+  breadcrumbs={[
+    { name: 'Home', href: '/' },
+    { name: 'Research & Engineering', href: '/research/' },
+    { name: 'Topics', href: '/research/topics/' },
+    { name: tagName, href: tagPath },
+  ]}
 >
   <section class="page-intro page-width narrow-intro">
-    <a class="back-link" href="/tags/">← <T k="tags.back" /></a>
+    <a class="back-link" href="/research/topics/">← <T k="tags.back" /></a>
     <h1>{tagName}</h1>
     <p><T k="tags.count" params={{ count: posts.length }} /></p>
   </section>
@@ -35,3 +40,4 @@ const tagPath = `/tags/${tagSlug(tagName)}/`;
     <PostList posts={posts} />
   </section>
 </BaseLayout>
+
