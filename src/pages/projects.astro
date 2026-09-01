@@ -11,8 +11,7 @@ import { projects } from '../data/projects';
   </section>
   <section class="project-page page-width">
     <p class="project-attribution"><T k="projects.attribution" /></p>
-    <div class="project-grid">
-      {projects.map((project, index) => <ProjectCard project={project} index={index + 1} />)}
-    </div>
+    {projects.length ? <div class="project-grid">{projects.map((project, index) => <ProjectCard project={project} index={index + 1} />)}</div> : <p class="projects-empty"><T k="projects.empty" /></p>}
   </section>
 </BaseLayout>
+

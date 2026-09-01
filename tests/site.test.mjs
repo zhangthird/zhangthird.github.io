@@ -113,16 +113,15 @@ test('homepage leads with articles and navigation includes Essays before About',
   assert.ok(nav.indexOf('Essays')<nav.indexOf('About'));
   assert.ok(nav.includes('href="/essays/"'));
 });
-test('project pages feature only confirmed open-source work, not the website itself',()=>{
+test('project pages do not list repositories without publicly verifiable contributions',()=>{
   const data=readFileSync('src/data/projects.ts','utf8');
   const projects=readFileSync('src/pages/projects.astro','utf8');
   const home=readFileSync('src/pages/index.astro','utf8');
   assert.doesNotMatch(projects,/Personal Website|personal-site/);
-  assert.match(projects,/projects\.attribution/);
-  for(const value of ['WebCanvas','https://github.com/zhangthird/WebCanvas','https://github.com/iMeanAI/WebCanvas'])assert.ok(data.includes(value),value);
-  for(const value of ['cc-mini','RL-LLM-Prior'])assert.doesNotMatch(data,new RegExp(value,'i'));
-  assert.match(home,/projects\.filter\(\(project\) => project\.featured\)\.slice\(0, 3\)/);
-  assert.match(home,/home\.selectedProjects/);
+  assert.match(data,/export const projects: Project\[\] = \[\];/);
+  for(const value of ['WebCanvas','cc-mini','RL-LLM-Prior'])assert.doesNotMatch(data,new RegExp(value,'i'));
+  assert.match(projects,/projects\.empty/);
+  assert.match(home,/featuredProjects\.length > 0/);
 });
 test('research topics have stable pages and tags link to their matching notes',()=>{
   const tagHelper=readFileSync('src/lib/tags.ts','utf8');

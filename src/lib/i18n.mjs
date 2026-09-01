@@ -28,8 +28,9 @@ export const messages = {
   'empty': ['No articles yet.', '暂无文章。'],
   'about.bio': ["I'm Cheng Cui. My interests include reinforcement learning, multi-agent learning, and AI agents, as well as scheduling and energy constraints in UAV communications.", '我是 Cheng Cui，关注强化学习、多智能体学习和 AI Agents，也对无人机通信中的调度与能量约束问题感兴趣。'],
   'email': ['Email', '邮箱'],
-  'projects.intro': ['Public open-source projects and research code in my GitHub account.', 'GitHub 账号中公开的开源项目与研究代码。'],
-  'projects.attribution': ['Some listed repositories are forks; each card links to both the hosted repository and, where available, its upstream source.', '部分列出的仓库为 fork；每张卡片均提供当前仓库链接，并在适用时提供上游来源。'],
+  'projects.intro': ['A curated list of publicly verifiable open-source contributions.', '经公开核实的开源贡献列表。'],
+  'projects.attribution': ['Only projects with publicly verifiable contributions are listed here.', '这里只展示可公开核实贡献的项目。'],
+  'projects.empty': ['No publicly verifiable open-source contributions are listed yet.', '暂时没有可公开核实的开源贡献可展示。'],
   'project.repository': ['View repository', '查看仓库'],
   'project.upstream': ['Upstream source', '上游来源'],
   'tags.title': ['Topics', '主题'],
@@ -149,3 +150,4 @@ export function changeLanguage(doc, language, storage) {
   applyLanguage(doc, locale);
   return locale;
 }
+
