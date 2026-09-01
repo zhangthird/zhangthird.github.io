@@ -634,15 +634,16 @@ test('npm build and dev clean photos first, and manual cleaning is available',()
 test('navigation stays sticky at all breakpoints and does not fade with page transitions',()=>{
   const css=readFileSync('src/styles/global.css','utf8');
   const header=readFileSync('src/components/Header.astro','utf8');
+  const layout=readFileSync('src/layouts/BaseLayout.astro','utf8');
   const headerRules=[...css.matchAll(/\.site-header\s*\{([^}]+)\}/g)].map(match=>match[1]);
   assert.ok(headerRules.some(rule=>/position:\s*sticky/.test(rule)));
   assert.ok(headerRules.every(rule=>!/position:\s*(relative|static|absolute)/.test(rule)));
   assert.match(header,/transition:name="site-header"/);
   assert.match(header,/transition:animate="none"/);
-  assert.match(header,/data-mobile-nav-toggle/);
-  assert.match(header,/class="mobile-nav-icon"/);
-  assert.match(css,/\.mobile-nav-toggle\.is-open/);
-  assert.match(css,/\.main-nav\.is-open/);
+  assert.doesNotMatch(header,/data-mobile-nav-toggle|nav\.menu/);
+  assert.doesNotMatch(layout,/__mobileNavCleanup|toggleMobileNav/);
+  assert.match(css,/\.main-nav \{ grid-column: 1 \/ -1; grid-row: 2; width: 100%;[^}]*overflow-x: auto;/);
+  assert.doesNotMatch(css,/\.main-nav\.is-open|mobile-nav-toggle/);
   assert.match(css,/@media \(max-width: 760px\)/);
   for(const file of ['index.html','research/index.html','research/react-agent-loop/index.html','photos/index.html']){
     const html=read(file);

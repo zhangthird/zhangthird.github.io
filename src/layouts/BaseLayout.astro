@@ -123,7 +123,7 @@ const breadcrumbJsonLd = breadcrumbItems.length > 1 ? JSON.stringify({
 
       function bindInteractions() {
         const root = document.documentElement;
-        const runtime = window as Window & { __siteShortcutBound?: boolean; __demoObserver?: IntersectionObserver; __mobileNavCleanup?: () => void };
+        const runtime = window as Window & { __siteShortcutBound?: boolean; __demoObserver?: IntersectionObserver };
         let savedTheme; try { savedTheme = localStorage.getItem('theme'); } catch {}
         if (savedTheme === 'light' || savedTheme === 'dark') root.dataset.theme = savedTheme;
         const themeButton = document.querySelector<HTMLButtonElement>('#theme-toggle');
@@ -144,52 +144,6 @@ const breadcrumbJsonLd = breadcrumbItems.length > 1 ? JSON.stringify({
             syncTheme();
           });
         }
-
-        runtime.__mobileNavCleanup?.();
-        const nav = document.querySelector<HTMLElement>('#primary-navigation');
-        const navToggle = document.querySelector<HTMLButtonElement>('[data-mobile-nav-toggle]');
-        const mobileQuery = window.matchMedia('(max-width: 760px)');
-        const closeMobileNav = () => {
-          nav?.classList.remove('is-open');
-          navToggle?.classList.remove('is-open');
-          navToggle?.setAttribute('aria-expanded', 'false');
-          navToggle?.setAttribute('aria-label', translate('nav.open', currentLanguage()));
-          if (mobileQuery.matches) nav?.setAttribute('aria-hidden', 'true');
-        };
-        const syncMobileNav = () => {
-          if (!mobileQuery.matches) {
-            nav?.classList.remove('is-open');
-            navToggle?.classList.remove('is-open');
-            nav?.removeAttribute('aria-hidden');
-            navToggle?.setAttribute('aria-expanded', 'false');
-            navToggle?.setAttribute('aria-label', translate('nav.open', currentLanguage()));
-          } else if (nav?.classList.contains('is-open')) {
-            navToggle?.classList.add('is-open');
-            nav.setAttribute('aria-hidden', 'false');
-            navToggle?.setAttribute('aria-expanded', 'true');
-            navToggle?.setAttribute('aria-label', translate('nav.close', currentLanguage()));
-          } else {
-            nav?.setAttribute('aria-hidden', 'true');
-          }
-        };
-        const toggleMobileNav = () => {
-          if (!nav || !navToggle || !mobileQuery.matches) return;
-          const open = nav.classList.toggle('is-open');
-          navToggle.classList.toggle('is-open', open);
-          navToggle.setAttribute('aria-expanded', String(open));
-          navToggle.setAttribute('aria-label', translate(open ? 'nav.close' : 'nav.open', currentLanguage()));
-          nav.setAttribute('aria-hidden', String(!open));
-        };
-        navToggle?.addEventListener('click', toggleMobileNav);
-        const navLinks = Array.from(nav?.querySelectorAll('a') ?? []);
-        navLinks.forEach((link) => link.addEventListener('click', closeMobileNav));
-        mobileQuery.addEventListener('change', syncMobileNav);
-        syncMobileNav();
-        runtime.__mobileNavCleanup = () => {
-          navToggle?.removeEventListener('click', toggleMobileNav);
-          navLinks.forEach((link) => link.removeEventListener('click', closeMobileNav));
-          mobileQuery.removeEventListener('change', syncMobileNav);
-        };
 
         const dialog = document.querySelector<HTMLDialogElement>('#search-dialog');
         const trigger = document.querySelector<HTMLButtonElement>('#search-trigger');
