@@ -1,0 +1,36 @@
+---
+import type { Project } from '../data/projects';
+import T from './T.astro';
+
+interface Props {
+  project: Project;
+  index?: number;
+  compact?: boolean;
+}
+
+const { project, index = 1, compact = false } = Astro.props;
+---
+
+<article class:list={{ 'project-card': true, compact }}>
+  <div class="project-card-top">
+    <span>{String(index).padStart(2, '0')}</span>
+    <span data-localized data-en={project.kind[0]} data-zh={project.kind[1]}>{project.kind[0]}</span>
+  </div>
+  <h3>{project.name}</h3>
+  <p data-localized data-en={project.description[0]} data-zh={project.description[1]}>{project.description[0]}</p>
+  {!compact && (
+    <ul class="project-highlights">
+      {project.highlights.map(([en, zh]) => <li data-localized data-en={en} data-zh={zh}>{en}</li>)}
+    </ul>
+  )}
+  <div class="project-card-footer">
+    <div class="tag-row" aria-label="Project topics">
+      {project.tags.map((tag) => <span>{tag}</span>)}
+    </div>
+    <span class="project-language">{project.language}</span>
+  </div>
+  <div class="project-links">
+    <a class="primary-link" href={project.repository} target="_blank" rel="noreferrer"><T k="project.repository" /> <span>↗</span></a>
+    {project.upstream !== project.repository && <a class="quiet-link" href={project.upstream} target="_blank" rel="noreferrer"><T k="project.upstream" /> ↗</a>}
+  </div>
+</article>

@@ -2,7 +2,7 @@
 title: "Sequence Models for Partially Observable RL"
 description: "Why memory matters in POMDPs, what a sequence encoder is actually estimating, and how recurrent and transformer policies differ in training."
 pubDate: 2026-08-12
-tags: ["POMDP", "Transformer", "Reinforcement Learning"]
+tags: ["RL", "POMDP", "Transformer"]
 featured: true
 readingTime: "12 min read"
 ---

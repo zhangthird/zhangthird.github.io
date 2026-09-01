@@ -9,6 +9,9 @@ export const messages = {
   'nav.about': ['About', '关于'],
   'nav.archives': ['Archives', '归档'],
   'nav.primary': ['Primary navigation', '主导航'],
+  'nav.menu': ['Menu', '菜单'],
+  'nav.open': ['Open navigation', '打开导航'],
+  'nav.close': ['Close navigation', '关闭导航'],
   'nav.home': ['Cheng Cui home', 'Cheng Cui 首页'],
   'language.toggle': ['中', 'EN'],
   'language.label': ['Switch to Chinese', '切换为英文'],
@@ -16,6 +19,8 @@ export const messages = {
   'theme.light': ['Switch to light mode', '切换浅色模式'],
   'theme.dark': ['Switch to dark mode', '切换深色模式'],
   'home.title': ['Articles by Cheng Cui', 'Cheng Cui 的文章'],
+  'home.selectedProjects': ['Selected Projects', '精选项目'],
+  'home.allProjects': ['All projects', '全部项目'],
   'allNotes': ['All notes', '全部笔记'],
   'allEssays': ['All essays · {count}', '全部随笔 · {count} 篇'],
   'essayIntro': ['Notes on reading, learning, and everyday life.', '读书、学习和日常生活的记录。'],
@@ -23,13 +28,16 @@ export const messages = {
   'empty': ['No articles yet.', '暂无文章。'],
   'about.bio': ["I'm Cheng Cui. My interests include reinforcement learning, multi-agent learning, and AI agents, as well as scheduling and energy constraints in UAV communications.", '我是 Cheng Cui，关注强化学习、多智能体学习和 AI Agents，也对无人机通信中的调度与能量约束问题感兴趣。'],
   'email': ['Email', '邮箱'],
-  'project.name': ['Personal Website', '个人网站'],
-  'project.type': ['Web / Open Source', '网站 / 开源'],
-  'project.intro': ['Built with Astro, with articles written in Markdown. Supports math, syntax highlighting, and full-text search.', '本站使用 Astro 构建，文章用 Markdown 编写。支持数学公式、代码高亮和全文搜索。'],
-  'project.rendering': ['Rendering', '内容渲染'],
-  'project.renderingBody': ['KaTeX renders formulas; Shiki highlights code.', 'KaTeX 渲染公式，Shiki 处理代码高亮。'],
-  'project.searchBody': ['Pagefind builds the search index ahead of time. Searches run in the browser without a backend.', 'Pagefind 在构建时生成搜索索引，浏览器直接查询，不需要后端服务。'],
-  'project.source': ['View source on GitHub', '查看 GitHub 源码'],
+  'projects.intro': ['Public open-source projects and research code in my GitHub account.', 'GitHub 账号中公开的开源项目与研究代码。'],
+  'projects.attribution': ['Some listed repositories are forks; each card links to both the hosted repository and, where available, its upstream source.', '部分列出的仓库为 fork；每张卡片均提供当前仓库链接，并在适用时提供上游来源。'],
+  'project.repository': ['View repository', '查看仓库'],
+  'project.upstream': ['Upstream source', '上游来源'],
+  'tags.title': ['Topics', '主题'],
+  'tags.intro': ['Browse research notes by topic.', '按主题浏览研究笔记。'],
+  'tags.count': ['{count} notes', '{count} 篇笔记'],
+  'tags.back': ['All topics', '全部主题'],
+  'article.newer': ['Newer note', '更新的笔记'],
+  'article.older': ['Older note', '更早的笔记'],
   'archive.title': ['All articles', '全部归档'],
   'archive.count': ['{articles} articles · {pages} archived page', '{articles} 篇文章，{pages} 个旧站页面。'],
   'archive.page': ['Archived page', '旧站页面'],
@@ -123,6 +131,10 @@ export function applyLanguage(doc, language) {
       const text = translate(key, locale);
       if (element.getAttribute(attr) !== text) element.setAttribute(attr, text);
     }
+  }
+  for (const element of doc.querySelectorAll('[data-localized]')) {
+    const text = element.getAttribute(`data-${locale}`);
+    if (text && element.textContent !== text) element.textContent = text;
   }
   for (const element of doc.querySelectorAll('time[data-site-i18n-date]')) {
     const date = new Date(element.getAttribute('datetime'));

@@ -15,15 +15,18 @@ interface Props {
   title?: string;
   description?: string;
   image?: string | null;
+  imageAlt?: string;
   type?: 'website' | 'article';
   titleKey?: string;
   descriptionKey?: string;
+  breadcrumbs?: { name: string; href: string }[];
 }
 
 const {
   title = SITE.title,
   description = SITE.description,
   image = '/og.svg',
+  imageAlt = `${SITE.name} — ${title}`,
   type = 'website',
   titleKey = Astro.props.title ? undefined : 'meta.home.title',
   descriptionKey = Astro.props.description ? undefined : 'meta.home.description',
@@ -32,6 +35,27 @@ const pageTitle = titleKey ? translate(titleKey) : title;
 const pageDescription = descriptionKey ? translate(descriptionKey) : description;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
 const socialImage = image ? new URL(image, Astro.site ?? 'https://zhangthird.github.io') : null;
+const breadcrumbItems = Astro.props.breadcrumbs ?? (Astro.url.pathname === '/' ? [] : [
+  { name: 'Home', href: '/' },
+  { name: pageTitle, href: Astro.url.pathname },
+]);
+const personJsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: SITE.name,
+  url: new URL('/', Astro.site ?? Astro.url.origin).toString(),
+  sameAs: [SITE.github],
+}).replace(/</g, '\\u003c');
+const breadcrumbJsonLd = breadcrumbItems.length > 1 ? JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbItems.map((item, position) => ({
+    '@type': 'ListItem',
+    position: position + 1,
+    name: item.name,
+    item: new URL(item.href, Astro.site ?? Astro.url.origin).toString(),
+  })),
+}).replace(/</g, '\\u003c') : null;
 ---
 
 <!doctype html>
@@ -47,14 +71,22 @@ const socialImage = image ? new URL(image, Astro.site ?? 'https://zhangthird.git
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title={`${SITE.name} RSS`} href="/rss.xml" />
     <meta property="og:type" content={type} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:title" content={pageTitle} data-site-i18n-content={titleKey} />
     <meta property="og:description" content={pageDescription} data-site-i18n-content={descriptionKey} />
     <meta property="og:url" content={canonical} />
     {socialImage && <meta property="og:image" content={socialImage} />}
+    {socialImage && <meta property="og:image:width" content="1200" />}
+    {socialImage && <meta property="og:image:height" content="630" />}
+    {socialImage && <meta property="og:image:alt" content={imageAlt} />}
     <meta name="twitter:card" content={socialImage ? 'summary_large_image' : 'summary'} />
     <meta name="twitter:title" content={pageTitle} data-site-i18n-content={titleKey} />
     <meta name="twitter:description" content={pageDescription} data-site-i18n-content={descriptionKey} />
     {socialImage && <meta name="twitter:image" content={socialImage} />}
+    {socialImage && <meta name="twitter:image:alt" content={imageAlt} />}
+    <script type="application/ld+json" set:html={personJsonLd}></script>
+    {breadcrumbJsonLd && <script type="application/ld+json" set:html={breadcrumbJsonLd}></script>}
     <script is:inline>
       (() => {
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -91,7 +123,7 @@ const socialImage = image ? new URL(image, Astro.site ?? 'https://zhangthird.git
 
       function bindInteractions() {
         const root = document.documentElement;
-        const runtime = window as Window & { __siteShortcutBound?: boolean; __demoObserver?: IntersectionObserver };
+        const runtime = window as Window & { __siteShortcutBound?: boolean; __demoObserver?: IntersectionObserver; __mobileNavCleanup?: () => void };
         let savedTheme; try { savedTheme = localStorage.getItem('theme'); } catch {}
         if (savedTheme === 'light' || savedTheme === 'dark') root.dataset.theme = savedTheme;
         const themeButton = document.querySelector<HTMLButtonElement>('#theme-toggle');
@@ -112,6 +144,48 @@ const socialImage = image ? new URL(image, Astro.site ?? 'https://zhangthird.git
             syncTheme();
           });
         }
+
+        runtime.__mobileNavCleanup?.();
+        const nav = document.querySelector<HTMLElement>('#primary-navigation');
+        const navToggle = document.querySelector<HTMLButtonElement>('[data-mobile-nav-toggle]');
+        const mobileQuery = window.matchMedia('(max-width: 760px)');
+        const closeMobileNav = () => {
+          nav?.classList.remove('is-open');
+          navToggle?.setAttribute('aria-expanded', 'false');
+          navToggle?.setAttribute('aria-label', translate('nav.open', currentLanguage()));
+          if (mobileQuery.matches) nav?.setAttribute('aria-hidden', 'true');
+        };
+        const syncMobileNav = () => {
+          if (!mobileQuery.matches) {
+            nav?.classList.remove('is-open');
+            nav?.removeAttribute('aria-hidden');
+            navToggle?.setAttribute('aria-expanded', 'false');
+            navToggle?.setAttribute('aria-label', translate('nav.open', currentLanguage()));
+          } else if (nav?.classList.contains('is-open')) {
+            nav.setAttribute('aria-hidden', 'false');
+            navToggle?.setAttribute('aria-expanded', 'true');
+            navToggle?.setAttribute('aria-label', translate('nav.close', currentLanguage()));
+          } else {
+            nav?.setAttribute('aria-hidden', 'true');
+          }
+        };
+        const toggleMobileNav = () => {
+          if (!nav || !navToggle || !mobileQuery.matches) return;
+          const open = nav.classList.toggle('is-open');
+          navToggle.setAttribute('aria-expanded', String(open));
+          navToggle.setAttribute('aria-label', translate(open ? 'nav.close' : 'nav.open', currentLanguage()));
+          nav.setAttribute('aria-hidden', String(!open));
+        };
+        navToggle?.addEventListener('click', toggleMobileNav);
+        const navLinks = Array.from(nav?.querySelectorAll('a') ?? []);
+        navLinks.forEach((link) => link.addEventListener('click', closeMobileNav));
+        mobileQuery.addEventListener('change', syncMobileNav);
+        syncMobileNav();
+        runtime.__mobileNavCleanup = () => {
+          navToggle?.removeEventListener('click', toggleMobileNav);
+          navLinks.forEach((link) => link.removeEventListener('click', closeMobileNav));
+          mobileQuery.removeEventListener('change', syncMobileNav);
+        };
 
         const dialog = document.querySelector<HTMLDialogElement>('#search-dialog');
         const trigger = document.querySelector<HTMLButtonElement>('#search-trigger');
@@ -143,6 +217,7 @@ const socialImage = image ? new URL(image, Astro.site ?? 'https://zhangthird.git
         if (!runtime.__siteShortcutBound) {
           runtime.__siteShortcutBound = true;
           document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeMobileNav();
             if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
               event.preventDefault();
               const currentDialog = document.querySelector<HTMLDialogElement>('#search-dialog');

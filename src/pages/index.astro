@@ -5,6 +5,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import PostList from '../components/PostList.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import { legacyPosts } from '../lib/legacy';
+import { projects } from '../data/projects';
+import ProjectCard from '../components/ProjectCard.astro';
 const research = (await getCollection('research')).filter(p => !p.data.draft).sort((a,b)=>b.data.pubDate.valueOf()-a.data.pubDate.valueOf());
 ---
 <BaseLayout>
@@ -13,7 +15,13 @@ const research = (await getCollection('research')).filter(p => !p.data.draft).so
     <SectionHeading index="01" title="Research & Engineering" titleKey="nav.research" href="/research/" linkKey="allNotes" />
     {research.length ? <PostList posts={research.slice(0,3)} /> : <p><T k="empty" /></p>}
   </section>
+  <section class="home-section page-width">
+    <SectionHeading index="02" title="Selected Projects" titleKey="home.selectedProjects" href="/projects/" linkKey="home.allProjects" />
+    <div class="project-grid project-grid-compact">
+      {projects.filter((project) => project.featured).slice(0, 3).map((project, index) => <ProjectCard project={project} index={index + 1} compact />)}
+    </div>
+  </section>
   <section class="home-section page-width home-essays">
-    <div><SectionHeading index="02" title="Essays" titleKey="nav.essays" /><p><T k="essayIntro" /></p><a class="quiet-link" href="/essays/"><T k="allEssays" params={{count: legacyPosts.filter(p=>p.slug !== 'about').length}} /> ↗</a></div>
+    <div><SectionHeading index="03" title="Essays" titleKey="nav.essays" /><p><T k="essayIntro" /></p><a class="quiet-link" href="/essays/"><T k="allEssays" params={{count: legacyPosts.filter(p=>p.slug !== 'about').length}} /> ↗</a></div>
   </section>
 </BaseLayout>

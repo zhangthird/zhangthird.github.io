@@ -1,0 +1,19 @@
+---
+interface Props {
+  src: string;
+  title: string;
+  caption?: string;
+  poster?: string;
+  autoplay?: boolean;
+}
+
+const { src, title, caption, poster, autoplay = false } = Astro.props;
+---
+
+<figure class="demo-figure video-demo">
+  <video class="demo-video" controls preload="metadata" poster={poster} data-autoplay-demo={autoplay ? '' : undefined} muted={autoplay} loop={autoplay} playsinline>
+    <source src={src} />
+    Your browser does not support embedded video.
+  </video>
+  <figcaption><strong>{title}</strong>{caption && ` — ${caption}`}</figcaption>
+</figure>

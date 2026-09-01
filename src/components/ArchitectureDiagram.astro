@@ -1,0 +1,40 @@
+---
+interface Props {
+  title?: string;
+  caption?: string;
+}
+
+const {
+  title = 'Agent loop architecture',
+  caption = 'The model selects an action, tools return an observation, and the updated state enters the next step.',
+} = Astro.props;
+---
+
+<figure class="architecture-diagram" aria-labelledby="agent-architecture-title">
+  <svg viewBox="0 0 760 260" role="img" aria-labelledby="agent-architecture-title agent-architecture-description">
+    <title id="agent-architecture-title">{title}</title>
+    <desc id="agent-architecture-description">{caption}</desc>
+    <defs>
+      <marker id="architecture-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="currentColor" /></marker>
+    </defs>
+    <g class="architecture-flow">
+      <path d="M180 100 H260" marker-end="url(#architecture-arrow)" />
+      <path d="M400 100 H480" marker-end="url(#architecture-arrow)" />
+      <path d="M620 100 H690 Q720 100 720 140 V185 Q720 215 690 215 H125 Q95 215 95 185 V150" marker-end="url(#architecture-arrow)" />
+    </g>
+    <g class="architecture-node">
+      <rect x="40" y="55" width="140" height="90" rx="10" />
+      <text x="110" y="92">State</text><text class="architecture-detail" x="110" y="116">history + memory</text>
+    </g>
+    <g class="architecture-node architecture-node-accent">
+      <rect x="260" y="55" width="140" height="90" rx="10" />
+      <text x="330" y="92">Model</text><text class="architecture-detail" x="330" y="116">plan or tool call</text>
+    </g>
+    <g class="architecture-node">
+      <rect x="480" y="55" width="140" height="90" rx="10" />
+      <text x="550" y="92">Tools</text><text class="architecture-detail" x="550" y="116">act on the world</text>
+    </g>
+    <text class="architecture-loop-label" x="410" y="202">observation → state update</text>
+  </svg>
+  <figcaption>{caption}</figcaption>
+</figure>

@@ -1,0 +1,28 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import T from '../../components/T.astro';
+import { collectTags } from '../../lib/tags';
+
+const posts = (await getCollection('research')).filter((post) => !post.data.draft);
+const tags = collectTags(posts);
+---
+
+<BaseLayout
+  title="Topics — Cheng Cui"
+  description="Browse Cheng Cui's research notes by topic."
+  breadcrumbs={[{ name: 'Home', href: '/' }, { name: 'Topics', href: '/tags/' }]}
+>
+  <section class="page-intro page-width narrow-intro">
+    <h1><T k="tags.title" /></h1>
+    <p><T k="tags.intro" /></p>
+  </section>
+  <section class="tag-directory page-width" aria-label="Research topics">
+    {tags.map((tag) => (
+      <a class="tag-directory-link" href={`/tags/${tag.slug}/`}>
+        <strong>{tag.name}</strong>
+        <T k="tags.count" params={{ count: tag.count }} />
+      </a>
+    ))}
+  </section>
+</BaseLayout>

@@ -13,7 +13,7 @@ const { pathname } = Astro.url;
       <span class="brand-brace">{`}`}</span>
     </a>
 
-    <nav class="main-nav" aria-label={translate("nav.primary")} data-site-i18n-aria-label="nav.primary">
+    <nav id="primary-navigation" class="main-nav" aria-label={translate("nav.primary")} data-site-i18n-aria-label="nav.primary">
       {NAV.map((item) => (
         <a
           href={item.href}
@@ -36,5 +36,6 @@ const { pathname } = Astro.url;
         <span class="theme-icon" aria-hidden="true">◐</span>
       </button>
     </div>
+    <button class="icon-button mobile-nav-toggle" type="button" data-mobile-nav-toggle aria-controls="primary-navigation" aria-expanded="false" aria-label={translate("nav.open")} data-site-i18n-aria-label="nav.open"><T k="nav.menu" /></button>
   </div>
 </header>

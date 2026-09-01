@@ -34,7 +34,8 @@ test('reference technical posts render math and syntax-highlighted code',()=>{
     const html=read(`${collection}/${id}/index.html`);
     assert.match(html,/class="katex/);
     assert.match(html,/data-pagefind-meta="title"/);
-    assert.doesNotMatch(html,/property="og:image"|name="twitter:image"/);
+    assert.match(html,/property="og:image"/);
+    assert.match(html,/name="twitter:image"/);
     assert.match(html,/og:type" content="article"/);
   }
   assert.match(read('research/react-agent-loop/index.html'),/astro-code|shiki/);
@@ -112,6 +113,63 @@ test('homepage leads with articles and navigation includes Essays before About',
   assert.ok(nav.indexOf('Essays')<nav.indexOf('About'));
   assert.ok(nav.includes('href="/essays/"'));
 });
+test('project pages feature three attributable open-source repositories, not the website itself',()=>{
+  const projects=read('projects/index.html');
+  const home=read('index.html');
+  assert.doesNotMatch(projects,/Personal Website|personal-site/);
+  assert.match(projects,/Some listed repositories are forks/);
+  for(const project of [
+    ['WebCanvas','https://github.com/zhangthird/WebCanvas','https://github.com/iMeanAI/WebCanvas'],
+    ['cc-mini','https://github.com/zhangthird/cc-mini'],
+    ['RL-LLM-Prior','https://github.com/zhangthird/RL-LLM-Prior'],
+  ]){
+    for(const value of project)assert.ok(projects.includes(value),value);
+    assert.ok(home.includes(project[0]),project[0]+' is selected on the home page');
+  }
+  assert.equal((home.match(/class="project-card compact"/g)||[]).length,3);
+  assert.match(home,/Selected Projects/);
+});
+test('research topics have stable pages and tags link to their matching notes',()=>{
+  const directory=read('tags/index.html');
+  for(const tag of ['Agent','RL']){
+    const slug=tag.toLowerCase();
+    assert.match(directory,new RegExp(`href="/tags/${slug}/"`));
+    assert.ok(existsSync(join(root,'tags',slug,'index.html')));
+  }
+  const agent=read('tags/agent/index.html');
+  const rl=read('tags/rl/index.html');
+  assert.match(agent,/A Minimal ReAct Agent Loop/);
+  assert.match(agent,/href="\/research\/react-agent-loop\/"/);
+  assert.match(rl,/PID-Lagrangian Reinforcement Learning/);
+  assert.match(rl,/Sequence Models for Partially Observable RL/);
+  assert.match(read('research/react-agent-loop/index.html'),/href="\/tags\/agent\/"/);
+  assert.match(read('research/pid-lagrangian-rl/index.html'),/href="\/tags\/rl\/"/);
+});
+test('research notes include adjacent navigation and working technical demo building blocks',()=>{
+  const newest=read('research/react-agent-loop/index.html');
+  const middle=read('research/rethinking-transformers-for-pomdps/index.html');
+  assert.match(newest,/Older note/);
+  assert.match(newest,/href="\/research\/rethinking-transformers-for-pomdps\/"/);
+  assert.match(middle,/Newer note/);
+  assert.match(middle,/Older note/);
+  assert.match(newest,/architecture-diagram/);
+  assert.match(newest,/data-agent-demo/);
+  for(const file of ['src/components/VideoDemo.astro','src/components/ArchitectureDiagram.astro','src/components/InteractiveDemo.astro'])assert.ok(existsSync(file),file);
+  assert.match(readFileSync('src/components/VideoDemo.astro','utf8'),/data-autoplay-demo/);
+  assert.match(readFileSync('src/components/InteractiveDemo.astro','utf8'),/prefers-reduced-motion/);
+});
+test('SEO ships Person and Breadcrumb schema with complete social image metadata',()=>{
+  const home=read('index.html');
+  const article=read('research/react-agent-loop/index.html');
+  assert.match(home,/@type&quot;:&quot;Person&quot;|"@type":"Person"/);
+  assert.match(article,/@type&quot;:&quot;BreadcrumbList&quot;|"@type":"BreadcrumbList"/);
+  for(const html of [home,article]){
+    assert.match(html,/property="og:site_name" content="Cheng Cui"/);
+    assert.match(html,/property="og:image:width" content="1200"/);
+    assert.match(html,/property="og:image:alt"/);
+    assert.match(html,/name="twitter:image:alt"/);
+  }
+});
 test('Essays is canonical and Archives aggregates every published article',()=>{
   const essays=read('essays/index.html');
   assert.match(essays,/<link rel="canonical" href="https:\/\/zhangthird.github.io\/essays\/"/);
@@ -150,7 +208,7 @@ test('personal contact links are centralized on About without repeated profile c
     assert.match(footer,/href="\/archives\/"/);
     assert.match(footer,/href="\/rss.xml"/);
   }
-  assert.match(read('projects/index.html'),/href="https:\/\/github.com\/zhangthird\/zhangthird.github.io"/);
+  assert.doesNotMatch(read('projects/index.html'),/https:\/\/github\.com\/zhangthird\/zhangthird\.github\.io/);
 });
 test('Writing merges into research with canonical routes and no duplicate listings',()=>{
   assert.match(read('writing/index.html'),/http-equiv="refresh"/i);
@@ -590,6 +648,9 @@ test('navigation stays sticky at all breakpoints and does not fade with page tra
   assert.ok(headerRules.every(rule=>!/position:\s*(relative|static|absolute)/.test(rule)));
   assert.match(header,/transition:name="site-header"/);
   assert.match(header,/transition:animate="none"/);
+  assert.match(header,/data-mobile-nav-toggle/);
+  assert.match(css,/\.main-nav\.is-open/);
+  assert.match(css,/@media \(max-width: 760px\)/);
   for(const file of ['index.html','research/index.html','research/react-agent-loop/index.html','photos/index.html']){
     const html=read(file);
     assert.equal([...html.matchAll(/class="main-nav"/g)].length,1);
@@ -598,13 +659,14 @@ test('navigation stays sticky at all breakpoints and does not fade with page tra
 });
 
 test('obsolete theme files and unused runtime code stay out of the project and deployment',()=>{
-  for(const file of ['index.html','404.html','about/index.html','archives/index.html','friends/index.html','search/index.html','tags/index.html','api-content/index.html','api-info/index.html','styles/main.css','media/gridea-search/gridea-search.js','media/gridea-search/result-template.ejs','media/scripts/index.js','media/images/geometry2.png','media/images/sidebar-bg.jpg','media/logo.png','src/components/ProjectCard.astro','scripts/sanitize-legacy.mjs']){
+  for(const file of ['index.html','404.html','about/index.html','archives/index.html','friends/index.html','search/index.html','tags/index.html','api-content/index.html','api-info/index.html','styles/main.css','media/gridea-search/gridea-search.js','media/gridea-search/result-template.ejs','media/scripts/index.js','media/images/geometry2.png','media/images/sidebar-bg.jpg','media/logo.png','scripts/sanitize-legacy.mjs']){
     assert.equal(existsSync(file),false,file);
   }
   for(const file of ['index.html','404.html','about/index.html','archives/index.html','friends/index.html','search/index.html','tags/index.html']){
     assert.ok(existsSync(join(root,file)),file+' is still generated');
   }
   for(const folder of ['media','styles','api-content','api-info'])assert.equal(existsSync(join(root,folder)),false,folder);
+  assert.ok(existsSync('src/components/ProjectCard.astro'));
   const layout=readFileSync('src/layouts/BaseLayout.astro','utf8');
   assert.doesNotMatch(layout,/__sitePointerBound|--pointer-[xy]|pointermove/);
   // Documented video support and all actual copy modes remain available.

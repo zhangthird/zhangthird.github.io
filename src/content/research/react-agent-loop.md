@@ -2,9 +2,10 @@
 title: "A Minimal ReAct Agent Loop"
 description: "A small control-flow view of an LLM agent: model call, tool selection, observation, state update, and termination."
 pubDate: 2026-08-21
-tags: ["AI Agents", "ReAct", "Tool Use"]
+tags: ["Agent", "ReAct", "Tool Use"]
 featured: true
 readingTime: "8 min read"
+demo: "agent-loop"
 ---
 
 A useful agent implementation should make the control flow visible. The smallest practical loop contains a model, a tool registry, a state object, and an explicit stopping condition.

@@ -5,6 +5,9 @@ import { translate } from '../../lib/i18n.mjs';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { formatDate } from '../../lib/format';
 import { SITE } from '../../lib/site';
+import { tagHref } from '../../lib/tags';
+import ArchitectureDiagram from '../../components/ArchitectureDiagram.astro';
+import InteractiveDemo from '../../components/InteractiveDemo.astro';
 
 export async function getStaticPaths() {
   const posts = (await getCollection('research')).filter((post) => !post.data.draft);
@@ -16,6 +19,12 @@ interface Props {
 }
 
 const { post } = Astro.props;
+const publishedPosts = (await getCollection('research'))
+  .filter((entry) => !entry.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const postIndex = publishedPosts.findIndex((entry) => entry.id === post.id);
+const newerPost = postIndex > 0 ? publishedPosts[postIndex - 1] : undefined;
+const olderPost = postIndex >= 0 ? publishedPosts[postIndex + 1] : undefined;
 const { Content, headings } = await render(post);
 const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
 const canonical = new URL(`/research/${post.id}/`, Astro.site ?? Astro.url.origin).toString();
@@ -40,7 +49,11 @@ const jsonLd = JSON.stringify({
   title={`${post.data.title} — Cheng Cui`}
   description={post.data.description}
   type="article"
-  image={null}
+  breadcrumbs={[
+    { name: 'Home', href: '/' },
+    { name: 'Research & Engineering', href: '/research/' },
+    { name: post.data.title, href: `/research/${post.id}/` },
+  ]}
 >
   <script type="application/ld+json" set:html={jsonLd}></script>
   <div class="reading-progress" data-reading-progress aria-hidden="true"><span></span></div>
@@ -53,13 +66,19 @@ const jsonLd = JSON.stringify({
       <div class="article-meta">
         <time data-site-i18n-date datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
         {post.data.readingTime && <T k="article.readingTime" params={{count:parseInt(post.data.readingTime)}} />}
-        {post.data.tags.map((tag) => <span class="article-tag">{tag}</span>)}
+        {post.data.tags.map((tag) => <a class="article-tag" href={tagHref(tag)}>{tag}</a>)}
       </div>
     </header>
 
     <div class="article-grid">
       <div class="prose" lang="en" data-article-prose>
         <Content />
+        {post.data.demo === 'agent-loop' && (
+          <>
+            <ArchitectureDiagram />
+            <InteractiveDemo />
+          </>
+        )}
       </div>
 
       {toc.length > 0 && (
@@ -73,6 +92,13 @@ const jsonLd = JSON.stringify({
         </aside>
       )}
     </div>
+
+    {(newerPost || olderPost) && (
+      <nav class="article-pagination" aria-label="Research note navigation">
+        {newerPost ? <a href={`/research/${newerPost.id}/`}><span><T k="article.newer" /></span><strong>{newerPost.data.title}</strong></a> : <span />}
+        {olderPost ? <a href={`/research/${olderPost.id}/`}><span><T k="article.older" /></span><strong>{olderPost.data.title}</strong></a> : <span />}
+      </nav>
+    )}
   </article>
 
   <style>

@@ -11,6 +11,7 @@ const articleSchema = z.object({
   featured: z.boolean().default(false),
   draft: z.boolean().default(false),
   readingTime: z.string().optional(),
+  demo: z.enum(['agent-loop']).optional(),
 });
 
 const research = defineCollection({

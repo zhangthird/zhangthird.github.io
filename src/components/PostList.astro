@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { formatDate } from '../lib/format';
+import { tagHref } from '../lib/tags';
 
 interface Props {
   posts: CollectionEntry<'research'>[];
@@ -11,17 +12,19 @@ const { posts } = Astro.props;
 <div class="post-list">
   {posts.map((post) => (
     <article class="post-row">
-      <a href={`/${post.collection}/${post.id}/`} class="post-row-link">
+      <div class="post-row-layout">
         <time data-site-i18n-date datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
         <div class="post-row-main">
-          <h3 lang="en">{post.data.title}</h3>
-          <p lang="en">{post.data.description}</p>
+          <a href={`/${post.collection}/${post.id}/`} class="post-row-link">
+            <h3 lang="en">{post.data.title}</h3>
+            <p lang="en">{post.data.description}</p>
+          </a>
           <div class="tag-row">
-            {post.data.tags.slice(0, 3).map((tag) => <span>{tag}</span>)}
+            {post.data.tags.slice(0, 3).map((tag) => <a href={tagHref(tag)}>{tag}</a>)}
           </div>
         </div>
         <span class="row-arrow" aria-hidden="true">↗</span>
-      </a>
+      </div>
     </article>
   ))}
 </div>

@@ -1,0 +1,84 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = 'Interactive agent loop' } = Astro.props;
+const steps = [
+  ['01', 'Read state'],
+  ['02', 'Plan action'],
+  ['03', 'Run tool'],
+  ['04', 'Update state'],
+];
+---
+
+<section class="interactive-demo" data-agent-demo aria-labelledby="agent-demo-title">
+  <div class="demo-heading">
+    <div>
+      <span class="mini-label">Interactive demo</span>
+      <h2 id="agent-demo-title">{title}</h2>
+    </div>
+    <p data-agent-demo-status aria-live="polite">Ready to step through the loop.</p>
+  </div>
+  <ol class="agent-demo-steps">
+    {steps.map(([index, label], step) => (
+      <li data-agent-demo-step={step} aria-current={step === 0 ? 'step' : undefined}>
+        <span>{index}</span><strong>{label}</strong>
+      </li>
+    ))}
+  </ol>
+  <div class="demo-controls">
+    <button type="button" class="primary-link demo-button" data-agent-demo-action="play">Play loop</button>
+    <button type="button" class="quiet-link demo-button" data-agent-demo-action="step">Next step</button>
+    <button type="button" class="quiet-link demo-button" data-agent-demo-action="reset">Reset</button>
+  </div>
+</section>
+
+<script>
+  function setupAgentDemo() {
+    const runtime = window as Window & { __agentDemoCleanup?: () => void };
+    runtime.__agentDemoCleanup?.();
+    const demo = document.querySelector<HTMLElement>('[data-agent-demo]');
+    if (!demo) return;
+
+    const steps = Array.from(demo.querySelectorAll<HTMLElement>('[data-agent-demo-step]'));
+    const status = demo.querySelector<HTMLElement>('[data-agent-demo-status]');
+    const controls = demo.querySelectorAll<HTMLButtonElement>('[data-agent-demo-action]');
+    const labels = ['Read state', 'Plan action', 'Run tool', 'Update state'];
+    let active = 0;
+    let timer: number | undefined;
+
+    const render = () => {
+      steps.forEach((step, index) => {
+        step.toggleAttribute('data-active', index === active);
+        if (index === active) step.setAttribute('aria-current', 'step');
+        else step.removeAttribute('aria-current');
+      });
+      if (status) status.textContent = `Step ${active + 1} of ${steps.length}: ${labels[active]}.`;
+    };
+    const stop = () => { if (timer) window.clearInterval(timer); timer = undefined; };
+    const next = () => { active = (active + 1) % steps.length; render(); };
+    const onClick = (event: Event) => {
+      const action = (event.currentTarget as HTMLElement).dataset.agentDemoAction;
+      if (action === 'reset') { stop(); active = 0; render(); if (status) status.textContent = 'Ready to step through the loop.'; }
+      if (action === 'step') { stop(); next(); }
+      if (action === 'play') {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          stop(); next();
+          if (status) status.textContent += ' Reduced motion is enabled, so the loop advanced one step.';
+          return;
+        }
+        if (timer) { stop(); if (status) status.textContent = 'Loop paused.'; return; }
+        next();
+        if (status) status.textContent = 'Loop is playing.';
+        timer = window.setInterval(next, 1200);
+      }
+    };
+    controls.forEach((control) => control.addEventListener('click', onClick));
+    render();
+    runtime.__agentDemoCleanup = () => { stop(); controls.forEach((control) => control.removeEventListener('click', onClick)); };
+  }
+
+  setupAgentDemo();
+  document.addEventListener('astro:page-load', setupAgentDemo);
+</script>

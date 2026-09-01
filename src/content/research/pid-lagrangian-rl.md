@@ -2,7 +2,7 @@
 title: "PID-Lagrangian Reinforcement Learning: Implementation Notes"
 description: "A compact derivation of Lagrangian constraint control and why proportional, integral, and derivative feedback can stabilize the multiplier."
 pubDate: 2026-08-11
-tags: ["Safe RL", "PID", "Optimization"]
+tags: ["RL", "Safe RL", "PID", "Optimization"]
 featured: true
 readingTime: "10 min read"
 ---
