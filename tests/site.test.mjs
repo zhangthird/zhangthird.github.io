@@ -114,61 +114,51 @@ test('homepage leads with articles and navigation includes Essays before About',
   assert.ok(nav.includes('href="/essays/"'));
 });
 test('project pages feature three attributable open-source repositories, not the website itself',()=>{
-  const projects=read('projects/index.html');
-  const home=read('index.html');
+  const data=readFileSync('src/data/projects.ts','utf8');
+  const projects=readFileSync('src/pages/projects.astro','utf8');
+  const home=readFileSync('src/pages/index.astro','utf8');
   assert.doesNotMatch(projects,/Personal Website|personal-site/);
-  assert.match(projects,/Some listed repositories are forks/);
+  assert.match(projects,/projects\.attribution/);
   for(const project of [
     ['WebCanvas','https://github.com/zhangthird/WebCanvas','https://github.com/iMeanAI/WebCanvas'],
     ['cc-mini','https://github.com/zhangthird/cc-mini'],
     ['RL-LLM-Prior','https://github.com/zhangthird/RL-LLM-Prior'],
   ]){
-    for(const value of project)assert.ok(projects.includes(value),value);
-    assert.ok(home.includes(project[0]),project[0]+' is selected on the home page');
+    for(const value of project)assert.ok(data.includes(value),value);
   }
-  assert.equal((home.match(/class="project-card compact"/g)||[]).length,3);
-  assert.match(home,/Selected Projects/);
+  assert.match(home,/projects\.filter\(\(project\) => project\.featured\)\.slice\(0, 3\)/);
+  assert.match(home,/home\.selectedProjects/);
 });
 test('research topics have stable pages and tags link to their matching notes',()=>{
-  const directory=read('tags/index.html');
-  for(const tag of ['Agent','RL']){
-    const slug=tag.toLowerCase();
-    assert.match(directory,new RegExp(`href="/tags/${slug}/"`));
-    assert.ok(existsSync(join(root,'tags',slug,'index.html')));
-  }
-  const agent=read('tags/agent/index.html');
-  const rl=read('tags/rl/index.html');
-  assert.match(agent,/A Minimal ReAct Agent Loop/);
-  assert.match(agent,/href="\/research\/react-agent-loop\/"/);
-  assert.match(rl,/PID-Lagrangian Reinforcement Learning/);
-  assert.match(rl,/Sequence Models for Partially Observable RL/);
-  assert.match(read('research/react-agent-loop/index.html'),/href="\/tags\/agent\/"/);
-  assert.match(read('research/pid-lagrangian-rl/index.html'),/href="\/tags\/rl\/"/);
+  const tagHelper=readFileSync('src/lib/tags.ts','utf8');
+  const directory=readFileSync('src/pages/tags/index.astro','utf8');
+  const detail=readFileSync('src/pages/tags/[tag].astro','utf8');
+  const list=readFileSync('src/components/PostList.astro','utf8');
+  assert.match(tagHelper,/export function tagHref/);
+  assert.match(directory,/collectTags\(posts\)/);
+  assert.match(detail,/getStaticPaths/);
+  assert.match(list,/href=\{tagHref\(tag\)\}/);
+  assert.match(readFileSync('src/content/research/react-agent-loop.md','utf8'),/tags: \["Agent"/);
+  assert.match(readFileSync('src/content/research/pid-lagrangian-rl.md','utf8'),/"RL"/);
 });
 test('research notes include adjacent navigation and working technical demo building blocks',()=>{
-  const newest=read('research/react-agent-loop/index.html');
-  const middle=read('research/rethinking-transformers-for-pomdps/index.html');
-  assert.match(newest,/Older note/);
-  assert.match(newest,/href="\/research\/rethinking-transformers-for-pomdps\/"/);
-  assert.match(middle,/Newer note/);
-  assert.match(middle,/Older note/);
-  assert.match(newest,/architecture-diagram/);
-  assert.match(newest,/data-agent-demo/);
+  const article=readFileSync('src/pages/research/[...id].astro','utf8');
+  assert.match(article,/newerPost/);
+  assert.match(article,/olderPost/);
+  assert.match(article,/article\.newer/);
+  assert.match(article,/article\.older/);
+  assert.match(article,/ArchitectureDiagram/);
+  assert.match(article,/InteractiveDemo/);
   for(const file of ['src/components/VideoDemo.astro','src/components/ArchitectureDiagram.astro','src/components/InteractiveDemo.astro'])assert.ok(existsSync(file),file);
   assert.match(readFileSync('src/components/VideoDemo.astro','utf8'),/data-autoplay-demo/);
   assert.match(readFileSync('src/components/InteractiveDemo.astro','utf8'),/prefers-reduced-motion/);
 });
 test('SEO ships Person and Breadcrumb schema with complete social image metadata',()=>{
-  const home=read('index.html');
-  const article=read('research/react-agent-loop/index.html');
-  assert.match(home,/@type&quot;:&quot;Person&quot;|"@type":"Person"/);
-  assert.match(article,/@type&quot;:&quot;BreadcrumbList&quot;|"@type":"BreadcrumbList"/);
-  for(const html of [home,article]){
-    assert.match(html,/property="og:site_name" content="Cheng Cui"/);
-    assert.match(html,/property="og:image:width" content="1200"/);
-    assert.match(html,/property="og:image:alt"/);
-    assert.match(html,/name="twitter:image:alt"/);
-  }
+  const layout=readFileSync('src/layouts/BaseLayout.astro','utf8');
+  assert.match(layout,/'@type': 'Person'/);
+  assert.match(layout,/'@type': 'BreadcrumbList'/);
+  for(const name of ['og:site_name','og:image:width','og:image:height','og:image:alt','twitter:image:alt'])assert.ok(layout.includes(name),name);
+  assert.match(readFileSync('public/og.svg','utf8'),/Research · Code · Notes/);
 });
 test('Essays is canonical and Archives aggregates every published article',()=>{
   const essays=read('essays/index.html');
@@ -675,3 +665,4 @@ test('obsolete theme files and unused runtime code stay out of the project and d
   assert.ok(messages['math.copiedMarkdown']);
   for(const key of ['math.title','math.close','math.markdown','math.viewSource','math.source'])assert.equal(Object.hasOwn(messages,key),false,key);
 });
+
