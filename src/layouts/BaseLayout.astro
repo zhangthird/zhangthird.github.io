@@ -151,6 +151,7 @@ const breadcrumbJsonLd = breadcrumbItems.length > 1 ? JSON.stringify({
         const mobileQuery = window.matchMedia('(max-width: 760px)');
         const closeMobileNav = () => {
           nav?.classList.remove('is-open');
+          navToggle?.classList.remove('is-open');
           navToggle?.setAttribute('aria-expanded', 'false');
           navToggle?.setAttribute('aria-label', translate('nav.open', currentLanguage()));
           if (mobileQuery.matches) nav?.setAttribute('aria-hidden', 'true');
@@ -158,10 +159,12 @@ const breadcrumbJsonLd = breadcrumbItems.length > 1 ? JSON.stringify({
         const syncMobileNav = () => {
           if (!mobileQuery.matches) {
             nav?.classList.remove('is-open');
+            navToggle?.classList.remove('is-open');
             nav?.removeAttribute('aria-hidden');
             navToggle?.setAttribute('aria-expanded', 'false');
             navToggle?.setAttribute('aria-label', translate('nav.open', currentLanguage()));
           } else if (nav?.classList.contains('is-open')) {
+            navToggle?.classList.add('is-open');
             nav.setAttribute('aria-hidden', 'false');
             navToggle?.setAttribute('aria-expanded', 'true');
             navToggle?.setAttribute('aria-label', translate('nav.close', currentLanguage()));
@@ -172,6 +175,7 @@ const breadcrumbJsonLd = breadcrumbItems.length > 1 ? JSON.stringify({
         const toggleMobileNav = () => {
           if (!nav || !navToggle || !mobileQuery.matches) return;
           const open = nav.classList.toggle('is-open');
+          navToggle.classList.toggle('is-open', open);
           navToggle.setAttribute('aria-expanded', String(open));
           navToggle.setAttribute('aria-label', translate(open ? 'nav.close' : 'nav.open', currentLanguage()));
           nav.setAttribute('aria-hidden', String(!open));
@@ -306,3 +310,4 @@ const breadcrumbJsonLd = breadcrumbItems.length > 1 ? JSON.stringify({
     </script>
   </body>
 </html>
+

@@ -633,6 +633,8 @@ test('navigation stays sticky at all breakpoints and does not fade with page tra
   assert.match(header,/transition:name="site-header"/);
   assert.match(header,/transition:animate="none"/);
   assert.match(header,/data-mobile-nav-toggle/);
+  assert.match(header,/class="mobile-nav-icon"/);
+  assert.match(css,/\.mobile-nav-toggle\.is-open/);
   assert.match(css,/\.main-nav\.is-open/);
   assert.match(css,/@media \(max-width: 760px\)/);
   for(const file of ['index.html','research/index.html','research/react-agent-loop/index.html','photos/index.html']){

@@ -36,6 +36,10 @@ const { pathname } = Astro.url;
         <span class="theme-icon" aria-hidden="true">◐</span>
       </button>
     </div>
-    <button class="icon-button mobile-nav-toggle" type="button" data-mobile-nav-toggle aria-controls="primary-navigation" aria-expanded="false" aria-label={translate("nav.open")} data-site-i18n-aria-label="nav.open"><T k="nav.menu" /></button>
+    <button class="icon-button mobile-nav-toggle" type="button" data-mobile-nav-toggle aria-controls="primary-navigation" aria-expanded="false" aria-label={translate("nav.open")} data-site-i18n-aria-label="nav.open">
+      <span class="mobile-nav-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="sr-only"><T k="nav.menu" /></span>
+    </button>
   </div>
 </header>
+
