@@ -138,7 +138,7 @@ test('template article and redundant essay archive links are removed',()=>{
 test('personal contact links are centralized on About without repeated profile cards',()=>{
   const about=read('about/index.html');
   assert.equal((about.match(/href="https:\/\/github.com\/zhangthird"/g)||[]).length,1);
-  assert.equal((about.match(/href="mailto:icuicheng@foxmail.com"/g)||[]).length,1);
+  assert.equal((about.match(/href="mailto:[^"]+"/g)||[]).length,1);
   assert.doesNotMatch(about,/about-card|>Name<|>Focus<|技术笔记 →|这个网站主要放/);
   const home=read('index.html');
   assert.doesNotMatch(home,/contact-note|联系我|href="https:\/\/github.com\/zhangthird"|href="mailto:/);
@@ -469,11 +469,23 @@ test('Photos is a separate bilingual route between Essays and About',()=>{
   }
   assert.ok(read('sitemap.xml').includes('/photos/'));
   assert.equal(translate('nav.photos','zh'),'照片');
-  assert.ok(!existsSync(join(root,'docs')));
-  assert.ok(!existsSync(join(root,'README.md')));
+});
+
+test('public documentation remains separate from local maintenance material',()=>{
+  assert.ok(existsSync('README.md'));
+  const publicDocs=readdirSync('docs',{withFileTypes:true})
+    .filter(entry=>entry.isFile())
+    .map(entry=>entry.name)
+    .sort();
+  assert.deepEqual(publicDocs,['design-principles.md','index.md','site-guide.md']);
+  assert.ok(readFileSync('docs/index.md','utf8').includes('面向访客'));
+  assert.ok(readFileSync('docs/site-guide.md','utf8').includes('浏览本站'));
+  assert.ok(readFileSync('docs/design-principles.md','utf8').includes('设计理念'));
+  assert.equal(existsSync(join(root,'docs')),false);
   const ignored=readFileSync('.gitignore','utf8');
-  assert.match(ignored,/^\/docs\/$/m);
-  assert.match(ignored,/^\/README\.md$/m);
+  assert.match(ignored,/^\/docs\/local\/$/m);
+  assert.doesNotMatch(ignored,/^\/docs\/$/m);
+  assert.doesNotMatch(ignored,/^\/README\.md$/m);
 });
 
 test('photo records validate paths, descriptions, dimensions and dates',()=>{
