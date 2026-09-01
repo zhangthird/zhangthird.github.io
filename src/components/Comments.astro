@@ -1,0 +1,92 @@
+---
+import T from './T.astro';
+import { translate } from '../lib/i18n.mjs';
+
+interface Props { issue: number }
+const { issue } = Astro.props;
+const issueUrl = `https://github.com/zhangthird/zhangthird.github.io/issues/${issue}`;
+const apiUrl = `https://api.github.com/repos/zhangthird/zhangthird.github.io/issues/${issue}/comments`;
+---
+
+<section class="comments" data-comments data-api-url={apiUrl} data-empty={translate('comments.empty')} data-error={translate('comments.error')} data-pagefind-ignore aria-labelledby={`comments-title-${issue}`}>
+  <div class="comments-heading">
+    <div><h2 id={`comments-title-${issue}`}><T k="comments.title" /></h2><p><T k="comments.help" /></p></div>
+    <a class="primary-link comments-write" href={`${issueUrl}#new_comment_field`} target="_blank" rel="noreferrer"><T k="comments.write" /> <span aria-hidden="true">↗</span></a>
+  </div>
+  <div class="comments-list" data-comments-list aria-live="polite"><p class="comments-status"><T k="comments.loading" /></p></div>
+  <noscript><p class="comments-status"><a href={issueUrl}><T k="comments.open" /> ↗</a></p></noscript>
+</section>
+
+<script>
+  interface GitHubComment {
+    id: number;
+    body?: string;
+    body_text?: string;
+    created_at: string;
+    html_url: string;
+    user?: { login?: string; avatar_url?: string; html_url?: string };
+  }
+
+  const renderComments = async (section: HTMLElement) => {
+    if (section.dataset.loaded === 'true') return;
+    section.dataset.loaded = 'true';
+    const list = section.querySelector<HTMLElement>('[data-comments-list]');
+    if (!list || !section.dataset.apiUrl) return;
+    try {
+      const response = await fetch(section.dataset.apiUrl, { headers: { Accept: 'application/vnd.github.text+json' } });
+      if (!response.ok) throw new Error(String(response.status));
+      const comments = await response.json() as GitHubComment[];
+      list.replaceChildren();
+      if (comments.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'comments-status';
+        empty.textContent = section.dataset.empty ?? '';
+        list.append(empty);
+        return;
+      }
+      const language = document.documentElement.lang.startsWith('zh') ? 'zh-CN' : 'en';
+      const dateFormatter = new Intl.DateTimeFormat(language, { dateStyle: 'medium' });
+      for (const comment of comments) {
+        const item = document.createElement('article');
+        item.className = 'comment-item';
+        const avatar = document.createElement('img');
+        avatar.className = 'comment-avatar';
+        avatar.src = comment.user?.avatar_url ?? 'https://github.com/identicons/app.png';
+        avatar.alt = '';
+        avatar.width = 36;
+        avatar.height = 36;
+        avatar.loading = 'lazy';
+        const content = document.createElement('div');
+        const meta = document.createElement('div');
+        meta.className = 'comment-meta';
+        const author = document.createElement('a');
+        author.href = comment.user?.html_url ?? comment.html_url;
+        author.target = '_blank';
+        author.rel = 'noreferrer';
+        author.textContent = comment.user?.login ?? 'GitHub user';
+        const time = document.createElement('a');
+        time.href = comment.html_url;
+        time.target = '_blank';
+        time.rel = 'noreferrer';
+        time.textContent = dateFormatter.format(new Date(comment.created_at));
+        meta.append(author, time);
+        const body = document.createElement('p');
+        body.className = 'comment-body';
+        body.textContent = comment.body_text ?? comment.body ?? '';
+        content.append(meta, body);
+        item.append(avatar, content);
+        list.append(item);
+      }
+    } catch {
+      list.replaceChildren();
+      const error = document.createElement('p');
+      error.className = 'comments-status';
+      error.textContent = section.dataset.error ?? '';
+      list.append(error);
+    }
+  };
+  const setupComments = () => document.querySelectorAll<HTMLElement>('[data-comments]').forEach((section) => renderComments(section));
+  setupComments();
+  document.addEventListener('astro:page-load', setupComments);
+</script>
+

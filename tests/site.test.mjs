@@ -152,6 +152,19 @@ test('research notes include adjacent navigation and working technical demo buil
   assert.match(readFileSync('src/components/VideoDemo.astro','utf8'),/data-autoplay-demo/);
   assert.match(readFileSync('src/components/InteractiveDemo.astro','utf8'),/prefers-reduced-motion/);
 });
+test('article comments use public GitHub issues without client secrets',()=>{
+  const component=readFileSync('src/components/Comments.astro','utf8');
+  const mapping=readFileSync('src/data/comments.ts','utf8');
+  const legacy=readFileSync('src/pages/post/[slug].astro','utf8');
+  const research=readFileSync('src/pages/research/[...id].astro','utf8');
+  assert.match(component,/api\.github\.com\/repos\/zhangthird\/zhangthird\.github\.io\/issues/);
+  assert.match(component,/data-comments-list/);
+  assert.match(component,/new_comment_field/);
+  assert.doesNotMatch(component,/clientSecret|clientID|oauth/i);
+  for(const issue of [2,3,5,6,7,8,10,11,12,13])assert.match(mapping,new RegExp(`: ${issue},`));
+  assert.match(legacy,/legacyCommentIssues\[post\.slug\]/);
+  assert.match(research,/researchCommentIssues\[post\.id\]/);
+});
 test('SEO ships Person and Breadcrumb schema with complete social image metadata',()=>{
   const layout=readFileSync('src/layouts/BaseLayout.astro','utf8');
   assert.match(layout,/'@type': 'Person'/);
