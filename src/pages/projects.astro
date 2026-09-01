@@ -10,8 +10,7 @@ import { projects } from '../data/projects';
     <p><T k="projects.intro" /></p>
   </section>
   <section class="project-page page-width">
-    <p class="project-attribution"><T k="projects.attribution" /></p>
-    {projects.length ? <div class="project-grid">{projects.map((project, index) => <ProjectCard project={project} index={index + 1} />)}</div> : <p class="projects-empty"><T k="projects.empty" /></p>}
+    <div class="project-grid">{projects.map((project, index) => <ProjectCard project={project} index={index + 1} />)}</div>
   </section>
 </BaseLayout>
 

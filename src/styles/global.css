@@ -127,8 +127,6 @@ main > .home-section:first-of-type { border-top: 0; }
 .listing-section, .project-page { padding-bottom: 80px; }
 .home-essays { padding-bottom: 56px; }
 .home-essays p { margin: 0 0 20px; color: var(--muted); font-size: var(--type-body); line-height: 1.8; }
-.project-attribution { max-width: var(--reading-width); margin: 0 0 28px; color: var(--muted); font-size: var(--type-small); line-height: 1.75; }
-.projects-empty { max-width: var(--reading-width); margin: 0; padding: 24px 0; border-top: 1px solid var(--line); color: var(--muted); }
 .project-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .project-card { display: flex; min-width: 0; flex-direction: column; padding: 24px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .project-card:hover { border-color: var(--line-strong); box-shadow: 0 10px 32px rgba(24, 24, 27, .05); }

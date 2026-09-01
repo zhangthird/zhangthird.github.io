@@ -114,14 +114,14 @@ test('homepage leads with articles and navigation includes Essays before About',
   assert.ok(nav.indexOf('Essays')<nav.indexOf('About'));
   assert.ok(nav.includes('href="/essays/"'));
 });
-test('project pages do not list repositories without publicly verifiable contributions',()=>{
+test('project pages list the confirmed WebCanvas contribution without exposing curation notes',()=>{
   const data=readFileSync('src/data/projects.ts','utf8');
   const projects=readFileSync('src/pages/projects.astro','utf8');
   const home=readFileSync('src/pages/index.astro','utf8');
   assert.doesNotMatch(projects,/Personal Website|personal-site/);
-  assert.match(data,/export const projects: Project\[\] = \[\];/);
-  for(const value of ['WebCanvas','cc-mini','RL-LLM-Prior'])assert.doesNotMatch(data,new RegExp(value,'i'));
-  assert.match(projects,/projects\.empty/);
+  for(const value of ['WebCanvas','https://github.com/zhangthird/WebCanvas','https://github.com/iMeanAI/WebCanvas'])assert.ok(data.includes(value),value);
+  for(const value of ['cc-mini','RL-LLM-Prior'])assert.doesNotMatch(data,new RegExp(value,'i'));
+  assert.doesNotMatch(projects,/projects\.(?:attribution|empty)/);
   assert.match(home,/featuredProjects\.length > 0/);
 });
 test('research topics have stable pages and tags link to their matching notes',()=>{
