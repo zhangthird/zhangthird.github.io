@@ -37,10 +37,8 @@ src/content/research/
 
 ## 文档
 
-- [架构说明](docs/ARCHITECTURE.md)
-- [功能说明](docs/FEATURES.md)
-- [视觉与交互规范](docs/DESIGN.md)
-- [内容维护指南](docs/CONTENT_GUIDE.md)
-- [部署与质量检查](docs/DEPLOYMENT.md)
+- [公开文档索引](docs/index.md)
+- [浏览本站](docs/site-guide.md)
+- [设计理念](docs/design-principles.md)
 
-修改代码前，建议先阅读 `docs/ARCHITECTURE.md` 和 `docs/DESIGN.md`，避免把当前的静态、内容优先架构逐步改成不必要的重型前端应用。
+维护、部署和内容编辑资料仅保留在本地的 `docs/local/` 中，不随公共仓库分发。

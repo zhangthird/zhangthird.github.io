@@ -4,9 +4,8 @@ node_modules/
 .astro/
 
 # Local maintenance notes and examples: never publish to the public repository.
-/README.md
-/docs/
-/media/README.md
+/docs/local/
+/media/readme.md
 /src/content/**/_draft*.md
 .env
 .env.*
