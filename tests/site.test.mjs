@@ -152,15 +152,22 @@ test('research notes include adjacent navigation and working technical demo buil
   assert.match(readFileSync('src/components/VideoDemo.astro','utf8'),/data-autoplay-demo/);
   assert.match(readFileSync('src/components/InteractiveDemo.astro','utf8'),/prefers-reduced-motion/);
 });
-test('article comments use public GitHub issues without client secrets',()=>{
+test('article comments use restricted Giscus discussions without client secrets',()=>{
   const component=readFileSync('src/components/Comments.astro','utf8');
+  const config=JSON.parse(readFileSync('giscus.json','utf8'));
   const mapping=readFileSync('src/data/comments.ts','utf8');
   const legacy=readFileSync('src/pages/post/[slug].astro','utf8');
   const research=readFileSync('src/pages/research/[...id].astro','utf8');
-  assert.match(component,/api\.github\.com\/repos\/zhangthird\/zhangthird\.github\.io\/issues/);
-  assert.match(component,/data-comments-list/);
-  assert.match(component,/new_comment_field/);
+  assert.match(component,/https:\/\/giscus\.app\/client\.js/);
+  assert.match(component,/data-repo-id="R_kgDOG6FPlA"/);
+  assert.match(component,/data-category-id="DIC_kwDOG6FPlM4DErHy"/);
+  assert.match(component,/data-mapping="pathname"/);
+  assert.match(component,/data-input-position="top"/);
+  assert.match(component,/data-reactions-enabled="1"/);
+  assert.match(component,/setupGiscusSync/);
+  assert.match(component,/issues\/\$\{issue\}/);
   assert.doesNotMatch(component,/clientSecret|clientID|oauth/i);
+  assert.deepEqual(config.origins,['https://zhangthird.github.io']);
   for(const issue of [2,3,5,6,7,8,10,11,12,13])assert.match(mapping,new RegExp(`: ${issue},`));
   assert.match(legacy,/legacyCommentIssues\[post\.slug\]/);
   assert.match(research,/researchCommentIssues\[post\.id\]/);
@@ -682,4 +689,3 @@ test('obsolete theme files and unused runtime code stay out of the project and d
   assert.ok(messages['math.copiedMarkdown']);
   for(const key of ['math.title','math.close','math.markdown','math.viewSource','math.source'])assert.equal(Object.hasOwn(messages,key),false,key);
 });
-

@@ -1,92 +1,83 @@
 ---
 import T from './T.astro';
-import { translate } from '../lib/i18n.mjs';
 
-interface Props { issue: number }
+interface Props { issue?: number }
 const { issue } = Astro.props;
-const issueUrl = `https://github.com/zhangthird/zhangthird.github.io/issues/${issue}`;
-const apiUrl = `https://api.github.com/repos/zhangthird/zhangthird.github.io/issues/${issue}/comments`;
+const issueUrl = issue ? `https://github.com/zhangthird/zhangthird.github.io/issues/${issue}` : undefined;
 ---
 
-<section class="comments" data-comments data-api-url={apiUrl} data-empty={translate('comments.empty')} data-error={translate('comments.error')} data-pagefind-ignore aria-labelledby={`comments-title-${issue}`}>
+<section class="comments" data-giscus-comments data-pagefind-ignore aria-labelledby="comments-title">
   <div class="comments-heading">
-    <div><h2 id={`comments-title-${issue}`}><T k="comments.title" /></h2><p><T k="comments.help" /></p></div>
-    <a class="primary-link comments-write" href={`${issueUrl}#new_comment_field`} target="_blank" rel="noreferrer"><T k="comments.write" /> <span aria-hidden="true">↗</span></a>
+    <div>
+      <h2 id="comments-title"><T k="comments.title" /></h2>
+      <p><T k="comments.help" /></p>
+    </div>
+    {issueUrl && <a class="comments-history" href={issueUrl} target="_blank" rel="noreferrer"><T k="comments.history" /> <span aria-hidden="true">↗</span></a>}
   </div>
-  <div class="comments-list" data-comments-list aria-live="polite"><p class="comments-status"><T k="comments.loading" /></p></div>
-  <noscript><p class="comments-status"><a href={issueUrl}><T k="comments.open" /> ↗</a></p></noscript>
+  <div class="giscus"></div>
+  <script
+    src="https://giscus.app/client.js"
+    data-repo="zhangthird/zhangthird.github.io"
+    data-repo-id="R_kgDOG6FPlA"
+    data-category="General"
+    data-category-id="DIC_kwDOG6FPlM4DErHy"
+    data-mapping="pathname"
+    data-strict="1"
+    data-reactions-enabled="1"
+    data-emit-metadata="0"
+    data-input-position="top"
+    data-theme="preferred_color_scheme"
+    data-lang="en"
+    data-loading="lazy"
+    crossorigin="anonymous"
+    async
+    is:inline
+    data-astro-rerun
+  ></script>
 </section>
 
 <script>
-  interface GitHubComment {
-    id: number;
-    body?: string;
-    body_text?: string;
-    created_at: string;
-    html_url: string;
-    user?: { login?: string; avatar_url?: string; html_url?: string };
-  }
+  const setupGiscusSync = () => {
+    const runtime = window as Window & { __giscusCleanup?: () => void };
+    runtime.__giscusCleanup?.();
 
-  const renderComments = async (section: HTMLElement) => {
-    if (section.dataset.loaded === 'true') return;
-    section.dataset.loaded = 'true';
-    const list = section.querySelector<HTMLElement>('[data-comments-list]');
-    if (!list || !section.dataset.apiUrl) return;
-    try {
-      const response = await fetch(section.dataset.apiUrl, { headers: { Accept: 'application/vnd.github.text+json' } });
-      if (!response.ok) throw new Error(String(response.status));
-      const comments = await response.json() as GitHubComment[];
-      list.replaceChildren();
-      if (comments.length === 0) {
-        const empty = document.createElement('p');
-        empty.className = 'comments-status';
-        empty.textContent = section.dataset.empty ?? '';
-        list.append(empty);
-        return;
-      }
-      const language = document.documentElement.lang.startsWith('zh') ? 'zh-CN' : 'en';
-      const dateFormatter = new Intl.DateTimeFormat(language, { dateStyle: 'medium' });
-      for (const comment of comments) {
-        const item = document.createElement('article');
-        item.className = 'comment-item';
-        const avatar = document.createElement('img');
-        avatar.className = 'comment-avatar';
-        avatar.src = comment.user?.avatar_url ?? 'https://github.com/identicons/app.png';
-        avatar.alt = '';
-        avatar.width = 36;
-        avatar.height = 36;
-        avatar.loading = 'lazy';
-        const content = document.createElement('div');
-        const meta = document.createElement('div');
-        meta.className = 'comment-meta';
-        const author = document.createElement('a');
-        author.href = comment.user?.html_url ?? comment.html_url;
-        author.target = '_blank';
-        author.rel = 'noreferrer';
-        author.textContent = comment.user?.login ?? 'GitHub user';
-        const time = document.createElement('a');
-        time.href = comment.html_url;
-        time.target = '_blank';
-        time.rel = 'noreferrer';
-        time.textContent = dateFormatter.format(new Date(comment.created_at));
-        meta.append(author, time);
-        const body = document.createElement('p');
-        body.className = 'comment-body';
-        body.textContent = comment.body_text ?? comment.body ?? '';
-        content.append(meta, body);
-        item.append(avatar, content);
-        list.append(item);
-      }
-    } catch {
-      list.replaceChildren();
-      const error = document.createElement('p');
-      error.className = 'comments-status';
-      error.textContent = section.dataset.error ?? '';
-      list.append(error);
-    }
+    const section = document.querySelector<HTMLElement>('[data-giscus-comments]');
+    if (!section) return;
+
+    const sync = () => {
+      const frame = section.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+      frame?.contentWindow?.postMessage({
+        giscus: {
+          setConfig: {
+            theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
+            lang: document.documentElement.lang.startsWith('zh') ? 'zh-CN' : 'en',
+          },
+        },
+      }, 'https://giscus.app');
+    };
+
+    const bindFrame = () => {
+      const frame = section.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+      if (!frame || frame.dataset.siteSyncBound) return;
+      frame.dataset.siteSyncBound = 'true';
+      frame.addEventListener('load', sync);
+      sync();
+    };
+
+    const rootObserver = new MutationObserver(sync);
+    rootObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'lang'] });
+    const frameObserver = new MutationObserver(bindFrame);
+    frameObserver.observe(section, { childList: true, subtree: true });
+    document.addEventListener('site:language-change', sync);
+    bindFrame();
+
+    runtime.__giscusCleanup = () => {
+      rootObserver.disconnect();
+      frameObserver.disconnect();
+      document.removeEventListener('site:language-change', sync);
+    };
   };
-  const setupComments = () => document.querySelectorAll<HTMLElement>('[data-comments]').forEach((section) => renderComments(section));
-  setupComments();
-  document.addEventListener('astro:page-load', setupComments);
-</script>
 
+  setupGiscusSync();
+  document.addEventListener('astro:page-load', setupGiscusSync);
+</script>
