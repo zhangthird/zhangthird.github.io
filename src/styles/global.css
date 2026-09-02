@@ -241,7 +241,6 @@ main > .home-section:first-of-type { border-top: 0; }
 .comments-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
 .comments-heading h2 { margin: 0 0 8px; font-size: var(--type-section); }
 .comments-heading p { margin: 0; color: var(--muted); font-size: var(--type-small); line-height: 1.7; }
-.comments-history { flex: 0 0 auto; font-size: var(--type-meta); }
 .giscus, .giscus-frame { width: 100%; }
 :root[data-theme="dark"] .astro-code, :root[data-theme="dark"] .astro-code span { color: var(--shiki-dark) !important; background-color: var(--shiki-dark-bg) !important; font-style: var(--shiki-dark-font-style) !important; font-weight: var(--shiki-dark-font-weight) !important; text-decoration: var(--shiki-dark-text-decoration) !important; }
 .toc { position: sticky; top: 100px; border-left: 1px solid var(--line); padding-left: 20px; max-height: calc(100vh - 130px); overflow: auto; }
@@ -330,7 +329,6 @@ main > .home-section:first-of-type { border-top: 0; }
   .article-pagination a:last-child { text-align: left; }
   .comments { margin-top: 40px; padding-top: 24px; }
   .comments-heading { display: grid; gap: 16px; }
-  .comments-history { justify-self: start; }
   .prose pre { padding: 14px; }
   .archive-year + .archive-year { margin-top: 36px; }
   .footer-inner { align-items: flex-start; flex-direction: column; gap: 16px; }

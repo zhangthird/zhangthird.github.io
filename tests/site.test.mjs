@@ -155,7 +155,6 @@ test('research notes include adjacent navigation and working technical demo buil
 test('article comments use restricted Giscus discussions without client secrets',()=>{
   const component=readFileSync('src/components/Comments.astro','utf8');
   const config=JSON.parse(readFileSync('giscus.json','utf8'));
-  const mapping=readFileSync('src/data/comments.ts','utf8');
   const legacy=readFileSync('src/pages/post/[slug].astro','utf8');
   const research=readFileSync('src/pages/research/[...id].astro','utf8');
   assert.match(component,/https:\/\/giscus\.app\/client\.js/);
@@ -165,12 +164,14 @@ test('article comments use restricted Giscus discussions without client secrets'
   assert.match(component,/data-input-position="top"/);
   assert.match(component,/data-reactions-enabled="1"/);
   assert.match(component,/setupGiscusSync/);
-  assert.match(component,/issues\/\$\{issue\}/);
+  assert.match(component,/dataset\.theme/);
+  assert.match(component,/theme: document\.documentElement\.dataset\.theme === 'dark' \? 'dark' : 'light'/);
+  assert.doesNotMatch(component,/issues\/|comments-history|issueUrl/);
   assert.doesNotMatch(component,/clientSecret|clientID|oauth/i);
   assert.deepEqual(config.origins,['https://zhangthird.github.io']);
-  for(const issue of [2,3,5,6,7,8,10,11,12,13])assert.match(mapping,new RegExp(`: ${issue},`));
-  assert.match(legacy,/legacyCommentIssues\[post\.slug\]/);
-  assert.match(research,/researchCommentIssues\[post\.id\]/);
+  assert.equal(existsSync('src/data/comments.ts'),false);
+  assert.match(legacy,/post\.slug !== 'about' && <Comments \/>/);
+  assert.match(research,/<Comments \/>/);
 });
 test('SEO ships Person and Breadcrumb schema with complete social image metadata',()=>{
   const layout=readFileSync('src/layouts/BaseLayout.astro','utf8');

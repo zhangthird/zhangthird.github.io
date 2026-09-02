@@ -25,7 +25,6 @@ export const messages = {
   'empty': ['No articles yet.', '暂无文章。'],
   'comments.title': ['Comments', '评论'],
   'comments.help': ['Sign in with GitHub to comment, reply, or react without leaving the article.', '使用 GitHub 登录后，可直接在文章内评论、回复和互动。'],
-  'comments.history': ['Previous Issue comments', '查看旧版 Issue 评论'],
   'about.bio': ["I'm Cheng Cui. My interests include reinforcement learning, multi-agent learning, and AI agents, as well as scheduling and energy constraints in UAV communications.", '我是 Cheng Cui，关注强化学习、多智能体学习和 AI Agents，也对无人机通信中的调度与能量约束问题感兴趣。'],
   'email': ['Email', '邮箱'],
   'projects.intro': ['Open-source projects and research engineering work.', '开源项目与研究工程实践。'],

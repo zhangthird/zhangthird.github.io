@@ -1,9 +1,5 @@
 ---
 import T from './T.astro';
-
-interface Props { issue?: number }
-const { issue } = Astro.props;
-const issueUrl = issue ? `https://github.com/zhangthird/zhangthird.github.io/issues/${issue}` : undefined;
 ---
 
 <section class="comments" data-giscus-comments data-pagefind-ignore aria-labelledby="comments-title">
@@ -12,7 +8,6 @@ const issueUrl = issue ? `https://github.com/zhangthird/zhangthird.github.io/iss
       <h2 id="comments-title"><T k="comments.title" /></h2>
       <p><T k="comments.help" /></p>
     </div>
-    {issueUrl && <a class="comments-history" href={issueUrl} target="_blank" rel="noreferrer"><T k="comments.history" /> <span aria-hidden="true">↗</span></a>}
   </div>
   <div class="giscus"></div>
   <script
@@ -43,6 +38,12 @@ const issueUrl = issue ? `https://github.com/zhangthird/zhangthird.github.io/iss
 
     const section = document.querySelector<HTMLElement>('[data-giscus-comments]');
     if (!section) return;
+
+    const loader = section.querySelector<HTMLScriptElement>('script[src="https://giscus.app/client.js"]');
+    if (loader) {
+      loader.dataset.theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+      loader.dataset.lang = document.documentElement.lang.startsWith('zh') ? 'zh-CN' : 'en';
+    }
 
     const sync = () => {
       const frame = section.querySelector<HTMLIFrameElement>('iframe.giscus-frame');

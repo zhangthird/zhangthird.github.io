@@ -9,7 +9,6 @@ import { tagHref } from '../../lib/tags';
 import ArchitectureDiagram from '../../components/ArchitectureDiagram.astro';
 import InteractiveDemo from '../../components/InteractiveDemo.astro';
 import Comments from '../../components/Comments.astro';
-import { researchCommentIssues } from '../../data/comments';
 
 export async function getStaticPaths() {
   const posts = (await getCollection('research')).filter((post) => !post.data.draft);
@@ -101,7 +100,7 @@ const jsonLd = JSON.stringify({
         {olderPost ? <a href={`/research/${olderPost.id}/`}><span><T k="article.older" /></span><strong>{olderPost.data.title}</strong></a> : <span />}
       </nav>
     )}
-    {researchCommentIssues[post.id] && <Comments issue={researchCommentIssues[post.id]} />}
+    <Comments />
   </article>
 
   <style>
@@ -208,4 +207,3 @@ const jsonLd = JSON.stringify({
     document.addEventListener('astro:page-load', setupArticleReadingUX);
   </script>
 </BaseLayout>
-
