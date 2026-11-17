@@ -199,6 +199,23 @@ test('research topics have stable pages and tags link to their matching notes',(
   assert.match(readFileSync('src/content/research/react-agent-loop.md','utf8'),/tags: \["Agent"/);
   assert.match(readFileSync('src/content/research/pid-lagrangian-rl.md','utf8'),/"RL"/);
 });
+test('Chinese Agent algorithm article is indexed with distinct Unicode topic links',()=>{
+  const page=read('research/grpo-vs-ppo/index.html');
+  const topic=read('research/topics/agent-algorithms/index.html');
+  const chineseTopic=read('research/topics/强化学习/index.html');
+  const source=readFileSync('src/content/research/grpo-vs-ppo.md','utf8');
+  const tags=readFileSync('src/lib/tags.ts','utf8');
+  assert.match(page,/<html[^>]+lang="zh-CN"/);
+  assert.match(page, /class="katex/);
+  assert.match(page, /data-language="mermaid"/);
+  assert.match(page, /href="\/research\/topics\/agent-algorithms\/"/);
+  assert.match(page, /href="\/research\/topics\/强化学习\/"/);
+  assert.match(topic, /GRPO 与 PPO 的区别/);
+  assert.match(chineseTopic, /GRPO 与 PPO 的区别/);
+  assert.match(source,/tags: \["Agent 算法", "强化学习", "PPO", "GRPO", "大语言模型"\]/);
+  assert.match(tags,/\\p\{L\}/);
+});
+
 test('research notes include adjacent navigation and working technical demo building blocks',()=>{
   const article=readFileSync('src/pages/research/[...id].astro','utf8');
   assert.match(article,/newerPost/);
