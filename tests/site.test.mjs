@@ -120,7 +120,7 @@ test('Mermaid research diagrams build as source blocks with a lazy, theme-aware 
   assert.match(component,/astro:page-load/);
   assert.match(component,/MutationObserver/);
   assert.match(layout,/<MermaidDiagrams \/>/);
-  assert.match(copy,/pre:not\(\[data-language="mermaid"\]\)/);
+  assert.match(copy,/getAttribute\(\x27data-language\x27\) === \x27mermaid\x27/);
 });
 test('homepage leads with articles and navigation includes Essays before About',()=>{
   const html=read('index.html');
