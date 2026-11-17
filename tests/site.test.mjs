@@ -59,7 +59,7 @@ test('pages have canonical, language, accessible main and descriptions',()=>{
   for(const file of pages){
     const html=readFileSync(file,'utf8');
     if (/http-equiv="refresh"/i.test(html)) continue;
-    assert.match(html,/<html[^>]+lang="en"/);
+    assert.match(html,/<html[^>]+lang="(?:en|zh-CN)"/);
     assert.match(html,/<main[^>]+id="main-content"/);
     assert.match(html,/<link[^>]+rel="canonical"[^>]+href="https:\/\/zhangthird.github.io\//);
     assert.match(html,/<meta name="description" content="[^"]+"/);
