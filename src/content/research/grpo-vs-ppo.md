@@ -133,7 +133,7 @@ Clipping 主要作用于当前策略与**采样旧策略**之间的比率；KL �
 
 ## 五、训练流程对比
 
-\`\`\`mermaid
+```mermaid
 flowchart TD
     A["训练任务 / Prompt"] --> B["典型 PPO"]
     A --> C["原始 GRPO"]
@@ -147,13 +147,13 @@ flowchart TD
     J --> K["裁剪策略更新"]
     G --> L["进入下一轮采样"]
     K --> L
-\`\`\`
+```
 
 *图：两条路径共享裁剪策略优化，但用于计算优势的信息不同。*
 
 下面是一段帮助理解 GRPO 的简化伪代码。它只演示奖励到策略损失的核心过程，真实训练还需处理有效 Token 掩码、生成批次、可选 KL 项、优化器更新和分布式同步。
 
-\`\`\`python
+```python
 # rewards: [batch, group_size]
 # token_logps / old_logps: [batch, group_size, seq_len]
 responses, old_logps = generate_group(policy, prompts, group_size=G)
@@ -179,7 +179,7 @@ response_objective = (
 )
 policy_loss = -response_objective.mean()
 # 可选：在此加入参考策略 KL 正则化
-\`\`\`
+```
 
 ## 六、GRPO 一定比 PPO 更省显存、更快吗？
 
