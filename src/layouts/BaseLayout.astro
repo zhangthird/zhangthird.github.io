@@ -18,6 +18,7 @@ interface Props {
   image?: string | null;
   imageAlt?: string;
   type?: 'website' | 'article';
+  contentLanguage?: 'en' | 'zh-CN';
   titleKey?: string;
   descriptionKey?: string;
   breadcrumbs?: { name: string; href: string }[];
@@ -29,6 +30,7 @@ const {
   image = '/og.svg',
   imageAlt = `${SITE.name} — ${title}`,
   type = 'website',
+  contentLanguage = 'en',
   titleKey = Astro.props.title ? undefined : 'meta.home.title',
   descriptionKey = Astro.props.description ? undefined : 'meta.home.description',
 } = Astro.props;
@@ -60,7 +62,7 @@ const breadcrumbJsonLd = breadcrumbItems.length > 1 ? JSON.stringify({
 ---
 
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang={contentLanguage} data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
@@ -73,7 +75,7 @@ const breadcrumbJsonLd = breadcrumbItems.length > 1 ? JSON.stringify({
     <link rel="alternate" type="application/rss+xml" title={`${SITE.name} RSS`} href="/rss.xml" />
     <meta property="og:type" content={type} />
     <meta property="og:site_name" content={SITE.name} />
-    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale" content={contentLanguage === 'zh-CN' ? 'zh_CN' : 'en_US'} />
     <meta property="og:title" content={pageTitle} data-site-i18n-content={titleKey} />
     <meta property="og:description" content={pageDescription} data-site-i18n-content={descriptionKey} />
     <meta property="og:url" content={canonical} />
