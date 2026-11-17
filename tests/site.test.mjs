@@ -106,6 +106,22 @@ test('research articles appear in their collection, search, feed and sitemap',()
   assert.ok(!existsSync(join(root,'research/_draft-example/index.html')));
   for(const file of ['index.html','research/index.html','search/index.html','rss.xml','sitemap.xml'])assert.ok(!read(file).includes('研究文章草稿示例'));
 });
+test('Mermaid research diagrams build as source blocks with a lazy, theme-aware renderer',()=>{
+  const source=readFileSync('src/content/research/designing-contamination-resistant-agent-benchmarks.md','utf8');
+  const component=readFileSync('src/components/MermaidDiagrams.astro','utf8');
+  const layout=readFileSync('src/layouts/BaseLayout.astro','utf8');
+  const copy=readFileSync('src/lib/content-copy.mjs','utf8');
+  const page=read('research/designing-contamination-resistant-agent-benchmarks/index.html');
+  assert.match(source,/```mermaid\nflowchart TD/);
+  assert.match(page,/data-language="mermaid"/);
+  assert.match(page,/私有任务生成器/);
+  assert.match(component,/mermaid@11\.17\.2/);
+  assert.match(component,/securityLevel: 'strict'/);
+  assert.match(component,/astro:page-load/);
+  assert.match(component,/MutationObserver/);
+  assert.match(layout,/<MermaidDiagrams \/>/);
+  assert.match(copy,/pre:not\(\[data-language="mermaid"\]\)/);
+});
 test('homepage leads with articles and navigation includes Essays before About',()=>{
   const html=read('index.html');
   assert.doesNotMatch(html,/personal-hero|hero-copy|研究兴趣/);
