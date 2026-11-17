@@ -1,6 +1,8 @@
 import type { CollectionEntry } from 'astro:content';
 
 export function tagSlug(tag: string) {
+  // Preserve a distinct URL for the Chinese Agent-algorithm topic.
+  if (tag.trim() === 'Agent 算法') return 'agent-algorithms';
   return tag
     .trim()
     .toLowerCase()
