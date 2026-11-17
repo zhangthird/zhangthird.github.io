@@ -192,7 +192,10 @@ test('Essays is canonical and Archives aggregates every published article',()=>{
   for(const href of ['/research/react-agent-loop/','/research/pid-lagrangian-rl/','/research/rethinking-transformers-for-pomdps/'])assert.ok(archive.includes(href));
   assert.ok(!archive.includes('研究文章草稿示例'));
   assert.ok(archive.indexOf('id="year-2026"')<archive.indexOf('id="year-2022"'));
-  const articleCount=legacySlugs.filter(slug=>slug!=='about').length+3;
+  const publishedResearchCount=readdirSync('src/content/research')
+    .filter(name=>name.endsWith('.md'))
+    .filter(name=>!/^draft:\s*true\s*$/m.test(readFileSync(join('src/content/research',name),'utf8'))).length;
+  const articleCount=legacySlugs.filter(slug=>slug!=='about').length+publishedResearchCount;
   const archivedPageCount=legacySlugs.filter(slug=>slug==='about').length;
   assert.ok(archive.includes(`${articleCount} articles · ${archivedPageCount} archived page`));
   assert.ok(read('sitemap.xml').includes('/essays/'));
