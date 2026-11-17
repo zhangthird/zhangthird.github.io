@@ -6,13 +6,13 @@ updatedDate: 2026-11-18
 tags: ["Agent 算法", "ReAct", "工具调用", "Agent Harness"]
 featured: true
 draft: false
-readingTime: "16 min read"
+readingTime: "19 min read"
 demo: "agent-loop"
 ---
 
 如今，一个能调用工具的大语言模型 Agent 往往只需要一个很短的主循环：**模型决定下一步动作，运行时执行被允许的工具，将观察结果返回模型，再决定继续还是结束。** 但真正值得理解的是主循环背后的状态、消息协议、边界条件与失败处理。只写一个无限循环，离可靠的 Agent 运行时还有明显距离。
 
-本文从 ReAct 的原始思想讲起，逐步分析一个现代 Tool-Calling Agent 的最小执行流程，并提供一份**可直接运行、无需 API Key 也能复现**的 JavaScript 示例。示例围绕“查询项目预算并计算余额”展开，另外支持通过兼容 Chat Completions 的接口接入真实模型。全文还结合 [learn-claude-code](https://github.com/shareAI-lab/learn-claude-code) 的渐进式教学思路讨论工具注册、权限控制和 Harness 的可扩展性。
+本文从 ReAct 的原始思想讲起，逐步分析一个现代 Tool-Calling Agent 的最小执行流程，并提供 **Python 与 JavaScript 两份可直接运行、无需 API Key 也能复现**的完整示例。示例围绕“查询项目预算并计算余额”展开，另外支持通过兼容 Chat Completions 的接口接入真实模型。全文还结合 [learn-claude-code](https://github.com/shareAI-lab/learn-claude-code) 的渐进式教学思路讨论工具注册、权限控制和 Harness 的可扩展性。
 
 先说明边界：这里演示的是 **ReAct 思想在现代工具调用 Agent 中的一种工程实现**。经典 ReAct 论文显式交替生成 Thought、Action 和 Observation；现代模型通常通过结构化 Tool Calling 表达 Action，并不需要暴露模型的私有推理内容。
 
@@ -90,20 +90,25 @@ flowchart TD
 
 ## 四、真正需要写进代码的几个模块
 
-[完整可运行示例：examples/react-agent-loop/agent.mjs](https://github.com/zhangthird/zhangthird.github.io/blob/main/examples/react-agent-loop/agent.mjs)
+配套代码提供两个版本，执行流程与数据一致：
 
-完整示例采用 Node.js 22+ 的原生 JavaScript，只使用标准库和内置 fetch，包含以下模块。
+- [Python 版本：agent.py](https://github.com/zhangthird/zhangthird.github.io/blob/main/examples/react-agent-loop/agent.py)（Python 3.10+，仅使用标准库）
+- [JavaScript 版本：agent.mjs](https://github.com/zhangthird/zhangthird.github.io/blob/main/examples/react-agent-loop/agent.mjs)（Node.js 22+，仅使用标准库和内置 fetch）
 
-| 模块 | 职责 | 为什么需要 |
-| --- | --- | --- |
-| TOOL_SPECS | 向模型说明工具名称、作用与参数结构 | 给模型明确的可用动作空间 |
-| TOOL_HANDLERS | 把工具名映射到实际函数 | 防止模型任意执行未注册的函数 |
-| executeTool | JSON 解析、参数校验、调用与错误包装 | 将不可信的模型输出隔离在执行边界外 |
-| runAgent | 消息管理、模型请求、工具反馈和预算限制 | 保持可观察、可控的执行循环 |
-| createDemoClient | 提供确定性的离线模拟模型 | 无需 API Key 就能复现协议与状态变化 |
-| createChatClient | 接入兼容 Chat Completions 的模型服务 | 以相同循环替换模拟模型 |
+两个版本都支持完全离线的可复现演示，也都可以接入兼容 Chat Completions 的工具调用模型接口。它们共享相同的工具描述、预算数据、执行状态和调用限制，因此可以直接对照阅读。
 
-核心循环保留了非常简单的形状：
+| 模块 | JavaScript | Python | 职责 |
+| --- | --- | --- | --- |
+| 工具定义 | TOOL_SPECS | TOOL_SPECS | 向模型描述可调用工具和参数 |
+| 工具注册 | TOOL_HANDLERS | TOOL_HANDLERS | 将名称映射到允许执行的函数 |
+| 参数校验和执行 | executeTool | execute_tool | 解析 JSON、验证输入、返回 Observation |
+| Agent Loop | runAgent | run_agent | 模型调用、消息维护和终止判断 |
+| 离线模拟 | createDemoClient | DemoClient | 不依赖 API Key 重现完整协议 |
+| 真实模型适配 | createChatClient | ChatClient | 调用兼容 Chat Completions 的服务 |
+
+代码架构的重点是**工具的声明、执行和状态循环相互独立**，而不是依赖某种特定语言或 Agent 框架。
+
+**无论使用哪种语言，核心循环都可以概括为以下结构。** 先看 JavaScript 写法：
 
 ~~~js
 for (let turn = 1; turn <= maxTurns; turn++) {
@@ -130,28 +135,62 @@ for (let turn = 1; turn <= maxTurns; turn++) {
 }
 ~~~
 
-*代码：简化后的控制流。此片段用于解释思路，不包含完整的预算检查、异常与消息验证。运行请使用仓库中的完整示例。*
+Python 版本采用同样的控制流，只是把工具调用和状态维护写成同步函数：
 
-其中运行时负责参数校验和工具执行，模型只提供“想调用什么”的结构化请求。把两者分开，是设计稳定 Agent Harness 的基础。
+~~~python
+for turn in range(1, max_turns + 1):
+    response = client.complete(messages=messages, tools=TOOL_SPECS)
+    calls = response.get("tool_calls") or []
+    messages.append({"role": "assistant",
+                     "content": response.get("content"),
+                     **({"tool_calls": calls} if calls else {})})
+
+    if not calls:
+        return {"status": "finished", "answer": response.get("content")}
+
+    for call in calls:
+        observation = execute_tool(call)
+        messages.append({
+            "role": "tool",
+            "tool_call_id": call["id"],
+            "content": json.dumps(observation, ensure_ascii=False),
+        })
+~~~
+
+*以上两段都是帮助理解的简化片段，省略了执行预算、错误处理和消息协议校验。完整实现请使用对应的 agent.py 或 agent.mjs。*
+
+其中运行时负责参数校验和工具执行，模型只提供“想调用什么”的结构化请求。Python 版本使用标准库 `urllib.request` 调用模型接口，因此不需要额外安装 SDK；JavaScript 版本使用 Node.js 内置 `fetch`。这也说明最小 Agent Loop 可以脱离大型框架独立实现。
 
 ## 五、运行完整示例
 
-如果已经安装 Node.js 22 或更新版本，可以克隆网站仓库后直接运行：
+准备 Python 3.10+ 或 Node.js 22+，先克隆仓库，再任选一种语言运行。
 
 ~~~bash
 git clone https://github.com/zhangthird/zhangthird.github.io.git
 cd zhangthird.github.io
+
+# Python：只依赖标准库
+python examples/react-agent-loop/agent.py
+
+# 或 Node.js
 node examples/react-agent-loop/agent.mjs
 ~~~
 
-默认启动**离线模拟模式**，无需注册账号或设置密钥。程序会依次模拟两个工具调用并打印结构化轨迹，然后返回项目余额。正常结果包含三个模型轮次、两次工具调用以及剩余预算 1760 元。因为模型行为是预设的，这一模式**仅用于教学和测试消息协议，不代表真实模型的自主推理能力**。
+Windows 上如果 `python` 命令不可用，可以尝试 `py -3 examples/react-agent-loop/agent.py`。
 
-如果要使用真实模型，可以配置支持 Chat Completions 格式的服务。下面是 Bash 的写法：
+两个版本默认都启动**离线模拟模式**，无需注册账号或设置密钥。程序依次模拟两个工具调用并打印结构化轨迹，最后返回项目余额。正常结果包含三个模型轮次、两次工具调用以及剩余预算 1760 元。
+
+因为模型行为是预设的，这一模式**用于教学和测试消息协议，不代表真实模型的自主推理能力**。仓库还提供 [Python 单元测试](https://github.com/zhangthird/zhangthird.github.io/blob/main/examples/react-agent-loop/test_agent.py)，验证工具白名单、参数校验、多工具调用、预算限制和调用 ID 配对。
+
+如果要接入真实模型，需要配置支持 Chat Completions 工具调用格式的服务。下面是 Bash 的写法，配置一次即可任选 Python 或 JavaScript：
 
 ~~~bash
 export LLM_API_KEY="你的密钥"
 export LLM_MODEL="支持工具调用的模型ID"
 export LLM_BASE_URL="你的服务地址/v1"
+
+python examples/react-agent-loop/agent.py "查询 project-alpha 的预算余额"
+# 或者
 node examples/react-agent-loop/agent.mjs "查询 project-alpha 的预算余额"
 ~~~
 
@@ -161,10 +200,18 @@ node examples/react-agent-loop/agent.mjs "查询 project-alpha 的预算余额"
 $env:LLM_API_KEY = "你的密钥"
 $env:LLM_MODEL = "支持工具调用的模型ID"
 $env:LLM_BASE_URL = "你的服务地址/v1"
+python examples/react-agent-loop/agent.py
+# 或者
 node examples/react-agent-loop/agent.mjs
 ~~~
 
-不同模型提供方可能采用不完全相同的工具调用协议，此示例面向兼容 **Chat Completions 风格**的接口。即使服务端接受该接口，也需要确认所选模型确实支持结构化工具调用。不应将密钥提交到代码仓库。
+不同模型提供方可能采用不完全相同的工具调用协议；两个示例都面向兼容 **Chat Completions 风格**的接口。即使服务端接受该接口，也需要确认所选模型确实支持结构化工具调用。Python 的同步请求与 JavaScript 的异步请求只影响实现方式，不改变 Agent Loop 的基本协议。不应将密钥提交到代码仓库。
+
+运行 Python 单元测试：
+
+~~~bash
+python -m unittest discover -s examples/react-agent-loop -p "test_*.py"
+~~~
 
 ## 六、完整示例比最初的 while 循环多做了什么？
 
@@ -239,7 +286,7 @@ node examples/react-agent-loop/agent.mjs
 
 1. Yao et al. [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629), ICLR 2023。
 2. shareAI-lab. [learn-claude-code：从 Agent Loop 到完整 Harness 的渐进教程](https://github.com/shareAI-lab/learn-claude-code)。
-3. [本文章可运行的 ReAct Agent 示例代码](https://github.com/zhangthird/zhangthird.github.io/blob/main/examples/react-agent-loop/agent.mjs)。
+3. 本文源码：[Python 实现](https://github.com/zhangthird/zhangthird.github.io/blob/main/examples/react-agent-loop/agent.py)、[JavaScript 实现](https://github.com/zhangthird/zhangthird.github.io/blob/main/examples/react-agent-loop/agent.mjs)与[Python 测试](https://github.com/zhangthird/zhangthird.github.io/blob/main/examples/react-agent-loop/test_agent.py)。
 4. [《如何判断 Agent 是否完成任务？》](/research/how-to-evaluate-agent-task-completion/)。
 
 ## 附：交互式执行流程
