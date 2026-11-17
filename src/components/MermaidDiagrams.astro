@@ -1,8 +1,9 @@
 <script>
-  // A pinned ESM build avoids adding an always-loaded diagram package to the website.
-  // Only articles containing fenced `mermaid` blocks request the module.
-  const MERMAID_URL = 'https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.esm.min.mjs';
+  import { currentLanguage, translate } from '../lib/i18n.mjs';
 
+  // Load the renderer only on pages with Mermaid blocks. Keep the Markdown source
+  // in the document, so a failed CDN request still leaves a readable diagram.
+  const MERMAID_URL = 'https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.esm.min.mjs';
   type MermaidInstance = {
     initialize: (options: Record<string, unknown>) => void;
     render: (id: string, source: string) => Promise<{
@@ -10,10 +11,18 @@
       bindFunctions?: (element: Element) => void;
     }>;
   };
+  type DiagramParts = {
+    figure: HTMLElement;
+    viewport: HTMLElement;
+    canvas: HTMLElement;
+    sourcePanel: HTMLElement;
+    sourceButton: HTMLButtonElement;
+  };
 
   let mermaidPromise: Promise<MermaidInstance> | undefined;
   let pending = Promise.resolve();
   let diagramCounter = 0;
+  let resizeFrame = 0;
 
   function loadMermaid() {
     mermaidPromise ??= import(/* @vite-ignore */ MERMAID_URL)
@@ -25,65 +34,230 @@
     return mermaidPromise;
   }
 
-  function getFigure(pre: HTMLPreElement): { figure: HTMLElement; canvas: HTMLElement } {
+  function makeButton(action: string, key: string, text?: string) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'mermaid-button';
+    button.dataset.mermaidAction = action;
+    button.setAttribute('data-site-i18n-aria-label', key);
+    button.setAttribute('data-site-i18n-title', key);
+    button.setAttribute('aria-label', translate(key, currentLanguage()));
+    button.title = translate(key, currentLanguage());
+    if (text) button.textContent = text;
+    else {
+      button.setAttribute('data-site-i18n', key);
+      button.textContent = translate(key, currentLanguage());
+    }
+    return button;
+  }
+
+  function getParts(pre: HTMLPreElement): DiagramParts {
     let figure = pre.closest<HTMLElement>('.mermaid-figure');
     if (!figure) {
       figure = document.createElement('figure');
       figure.className = 'mermaid-figure';
       figure.setAttribute('data-pagefind-ignore', '');
-      pre.before(figure);
+      figure.dataset.zoomMode = 'fit';
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'mermaid-toolbar';
+      const title = document.createElement('span');
+      title.className = 'mermaid-toolbar-title';
+      title.setAttribute('data-site-i18n', 'mermaid.diagram');
+      title.textContent = translate('mermaid.diagram', currentLanguage());
+      const tools = document.createElement('div');
+      tools.className = 'mermaid-tools';
+      const zoomOut = makeButton('zoom-out', 'mermaid.zoomOut', '−');
+      const zoomLabel = makeButton('zoom-fit', 'mermaid.fit', '100%');
+      zoomLabel.classList.add('mermaid-zoom-label');
+      const zoomIn = makeButton('zoom-in', 'mermaid.zoomIn', '+');
+      const sourceButton = makeButton('source', 'mermaid.showSource');
+      sourceButton.setAttribute('aria-expanded', 'false');
+      const copy = makeButton('copy', 'mermaid.copy');
+      tools.append(zoomOut, zoomLabel, zoomIn, sourceButton, copy);
+      toolbar.append(title, tools);
+
+      const viewport = document.createElement('div');
+      viewport.className = 'mermaid-viewport';
+      viewport.setAttribute('role', 'region');
+      viewport.setAttribute('data-site-i18n-aria-label', 'mermaid.diagram');
+      viewport.setAttribute('aria-label', translate('mermaid.diagram', currentLanguage()));
+      viewport.tabIndex = 0;
       const canvas = document.createElement('div');
       canvas.className = 'mermaid-canvas';
       canvas.setAttribute('role', 'img');
-      canvas.setAttribute('aria-label', 'Mermaid diagram');
-      figure.append(canvas, pre);
+      canvas.setAttribute('data-site-i18n-aria-label', 'mermaid.diagram');
+      canvas.setAttribute('aria-label', translate('mermaid.diagram', currentLanguage()));
+      viewport.append(canvas);
+
+      const sourcePanel = document.createElement('div');
+      sourcePanel.className = 'mermaid-source-panel';
+      sourcePanel.hidden = true;
+      pre.before(figure);
+      sourcePanel.append(pre);
+      const feedback = document.createElement('span');
+      feedback.className = 'mermaid-feedback sr-only';
+      feedback.setAttribute('role', 'status');
+      feedback.setAttribute('aria-live', 'polite');
+      toolbar.append(feedback);
+      figure.append(toolbar, viewport, sourcePanel);
+      figure.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const button = target.closest<HTMLButtonElement>('[data-mermaid-action]');
+        if (!button) return;
+        const action = button.dataset.mermaidAction;
+        if (action === 'source') {
+          setSourceOpen(figure!, figure!.dataset.sourceOpen !== 'true');
+        } else if (action === 'copy') {
+          void copySource(figure!, button);
+        } else if (action === 'zoom-in' || action === 'zoom-out') {
+          const current = Number(figure!.dataset.zoom || '1');
+          figure!.dataset.zoomMode = 'custom';
+          applyZoom(figure!, current + (action === 'zoom-in' ? 0.2 : -0.2));
+        } else if (action === 'zoom-fit') {
+          figure!.dataset.zoomMode = 'fit';
+          applyZoom(figure!, fitScale(figure!));
+        }
+      });
     }
     return {
       figure,
+      viewport: figure.querySelector<HTMLElement>('.mermaid-viewport')!,
       canvas: figure.querySelector<HTMLElement>('.mermaid-canvas')!,
+      sourcePanel: figure.querySelector<HTMLElement>('.mermaid-source-panel')!,
+      sourceButton: figure.querySelector<HTMLButtonElement>('[data-mermaid-action="source"]')!,
     };
+  }
+
+  function setSourceOpen(figure: HTMLElement, isOpen: boolean) {
+    const panel = figure.querySelector<HTMLElement>('.mermaid-source-panel')!;
+    const viewport = figure.querySelector<HTMLElement>('.mermaid-viewport')!;
+    const button = figure.querySelector<HTMLButtonElement>('[data-mermaid-action="source"]')!;
+    figure.dataset.sourceOpen = String(isOpen);
+    panel.hidden = !isOpen;
+    viewport.hidden = isOpen;
+    button.setAttribute('aria-expanded', String(isOpen));
+    const key = isOpen ? 'mermaid.hideSource' : 'mermaid.showSource';
+    button.setAttribute('data-site-i18n', key);
+    button.setAttribute('data-site-i18n-aria-label', key);
+    button.setAttribute('data-site-i18n-title', key);
+    button.textContent = translate(key, currentLanguage());
+    button.setAttribute('aria-label', translate(key, currentLanguage()));
+    button.title = translate(key, currentLanguage());
+  }
+
+  async function copySource(figure: HTMLElement, button: HTMLButtonElement) {
+    const source = figure.querySelector('pre code')?.textContent || '';
+    if (!source) return;
+    const feedback = figure.querySelector<HTMLElement>('.mermaid-feedback')!;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(source);
+      if (!figure.isConnected) return;
+      feedback.textContent = translate('mermaid.copied', currentLanguage());
+      const key = 'mermaid.copied';
+      button.textContent = translate(key, currentLanguage());
+      button.setAttribute('data-site-i18n', key);
+      window.setTimeout(() => {
+        if (!figure.isConnected) return;
+        button.setAttribute('data-site-i18n', 'mermaid.copy');
+        button.textContent = translate('mermaid.copy', currentLanguage());
+      }, 1600);
+    } catch {
+      setSourceOpen(figure, true);
+      let fallback = figure.querySelector<HTMLTextAreaElement>('.mermaid-copy-fallback');
+      if (!fallback) {
+        fallback = document.createElement('textarea');
+        fallback.className = 'mermaid-copy-fallback';
+        fallback.readOnly = true;
+        fallback.rows = 5;
+        fallback.setAttribute('data-site-i18n-aria-label', 'copy.source');
+        fallback.setAttribute('aria-label', translate('copy.source', currentLanguage()));
+        figure.querySelector('.mermaid-source-panel')?.append(fallback);
+      }
+      fallback.value = source;
+      fallback.focus({ preventScroll: true });
+      fallback.select();
+      feedback.textContent = translate('math.failed', currentLanguage());
+    }
+  }
+
+  function naturalWidth(figure: HTMLElement) {
+    const svg = figure.querySelector<SVGSVGElement>('.mermaid-canvas svg');
+    const parts = svg?.getAttribute('viewBox')?.trim().split(/[\s,]+/) || [];
+    const width = Number(parts[2]);
+    return Number.isFinite(width) && width > 0 ? width : 640;
+  }
+
+  function fitScale(figure: HTMLElement) {
+    const viewport = figure.querySelector<HTMLElement>('.mermaid-viewport')!;
+    // Fit diagrams to the reading column while keeping labels legible on phones.
+    return Math.max(0.65, Math.min(1, (viewport.clientWidth - 40) / naturalWidth(figure)));
+  }
+
+  function applyZoom(figure: HTMLElement, scale: number) {
+    const svg = figure.querySelector<SVGSVGElement>('.mermaid-canvas svg');
+    const canvas = figure.querySelector<HTMLElement>('.mermaid-canvas');
+    if (!svg || !canvas) return;
+    const zoom = Math.max(0.5, Math.min(2.5, Math.round(scale * 100) / 100));
+    figure.dataset.zoom = String(zoom);
+    const width = naturalWidth(figure) * zoom;
+    svg.style.maxWidth = 'none';
+    svg.style.width = width + 'px';
+    svg.style.height = 'auto';
+    canvas.style.width = width + 'px';
+    const label = figure.querySelector<HTMLButtonElement>('[data-mermaid-action="zoom-fit"]');
+    if (label) label.textContent = Math.round(zoom * 100) + '%';
+    const out = figure.querySelector<HTMLButtonElement>('[data-mermaid-action="zoom-out"]');
+    const up = figure.querySelector<HTMLButtonElement>('[data-mermaid-action="zoom-in"]');
+    if (out) out.disabled = zoom <= 0.5;
+    if (up) up.disabled = zoom >= 2.5;
   }
 
   async function renderDiagrams() {
     const blocks = Array.from(document.querySelectorAll<HTMLPreElement>('.prose pre[data-language="mermaid"]'));
     if (!blocks.length) return;
-
     let mermaid: MermaidInstance;
     try {
       mermaid = await loadMermaid();
     } catch (error) {
-      // Keep the original highlighted code readable when the diagram library is unavailable.
-      console.error('Unable to load the Mermaid renderer:', error);
+      console.error('Unable to load Mermaid:', error);
       return;
     }
-
-    const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default';
+    const dark = document.documentElement.dataset.theme === 'dark';
+    const theme = dark ? 'dark' : 'light';
+    const palette = dark
+      ? { background: '#131315', primaryColor: '#202126', primaryTextColor: '#ececee', primaryBorderColor: '#585a65', secondaryColor: '#1c2839', tertiaryColor: '#18191e', lineColor: '#a6abb5', textColor: '#ececee' }
+      : { background: '#ffffff', primaryColor: '#f5f7fb', primaryTextColor: '#18181b', primaryBorderColor: '#c7cfdd', secondaryColor: '#eaf2ff', tertiaryColor: '#f8fafc', lineColor: '#707b8c', textColor: '#18181b' };
     mermaid.initialize({
       startOnLoad: false,
-      theme,
+      theme: 'base',
       securityLevel: 'strict',
       fontFamily: 'system-ui, "PingFang SC", "Microsoft YaHei", sans-serif',
+      themeVariables: { ...palette, fontSize: '14px' },
+      flowchart: { nodeSpacing: 32, rankSpacing: 44, padding: 12, curve: 'basis' },
     });
 
     for (const pre of blocks) {
       if (!pre.isConnected) continue;
-      const { figure, canvas } = getFigure(pre);
+      const { figure, canvas } = getParts(pre);
       if (figure.dataset.renderedTheme === theme) continue;
       const source = pre.querySelector('code')?.textContent?.trim() || pre.textContent?.trim() || '';
       if (!source) continue;
-
       try {
         const id = `research-mermaid-${++diagramCounter}`;
         const { svg, bindFunctions } = await mermaid.render(id, source);
         if (!figure.isConnected) continue;
         canvas.innerHTML = svg;
         bindFunctions?.(canvas);
-        pre.hidden = true;
         figure.dataset.renderedTheme = theme;
+        applyZoom(figure, figure.dataset.zoomMode === 'custom' ? Number(figure.dataset.zoom || '1') : fitScale(figure));
+        setSourceOpen(figure, figure.dataset.sourceOpen === 'true');
       } catch (error) {
-        console.error('Unable to render a Mermaid diagram:', error);
+        console.error('Unable to render Mermaid diagram:', error);
         canvas.replaceChildren();
-        pre.hidden = false;
+        setSourceOpen(figure, true);
         delete figure.dataset.renderedTheme;
       }
     }
@@ -91,7 +265,7 @@
 
   function scheduleRender() {
     pending = pending.then(renderDiagrams).catch((error) => {
-      console.error('Mermaid diagram initialization failed:', error);
+      console.error('Mermaid initialization failed:', error);
     });
   }
 
@@ -99,38 +273,108 @@
   new MutationObserver((changes) => {
     if (changes.some((change) => change.attributeName === 'data-theme')) scheduleRender();
   }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  window.addEventListener('resize', () => {
+    window.cancelAnimationFrame(resizeFrame);
+    resizeFrame = window.requestAnimationFrame(() => {
+      for (const figure of document.querySelectorAll<HTMLElement>('.mermaid-figure[data-zoom-mode="fit"]')) {
+        applyZoom(figure, fitScale(figure));
+      }
+    });
+  });
   scheduleRender();
 </script>
 
 <style is:global>
   .prose .mermaid-figure {
     max-width: 100%;
+    min-width: 0;
     margin: 1.9rem 0;
-    padding: 20px 16px;
-    overflow-x: auto;
+    overflow: hidden;
     border: 1px solid var(--line);
     border-radius: 8px;
     background: var(--surface);
   }
-  .prose .mermaid-canvas {
-    display: grid;
-    min-width: 540px;
-    place-items: center;
+  .mermaid-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 46px;
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
   }
-  .prose .mermaid-canvas svg {
+  .mermaid-toolbar-title {
+    color: var(--muted);
+    font-size: var(--type-meta);
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .mermaid-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px; }
+  .mermaid-button {
+    min-height: 30px;
+    min-width: 30px;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: var(--font-text);
+    font-size: var(--type-meta);
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  .mermaid-button:hover, .mermaid-button:focus-visible {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--text);
+  }
+  .mermaid-button:disabled { opacity: .45; cursor: default; }
+  .mermaid-zoom-label { min-width: 48px; font-variant-numeric: tabular-nums; }
+  .mermaid-viewport {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    padding: 20px;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+  .mermaid-canvas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    min-width: 0;
+    max-width: none;
+  }
+  .mermaid-canvas svg {
     display: block;
-    max-width: 100%;
+    flex: none;
+    max-width: none !important;
     height: auto;
   }
-  .prose .mermaid-figure pre {
-    margin: 0;
+  .mermaid-source-panel { padding: 14px; }
+  .prose .mermaid-source-panel pre { margin: 0; max-height: 420px; overflow: auto; }
+  .mermaid-copy-fallback {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-code);
+    font-size: var(--type-small);
   }
-  .prose .mermaid-figure pre[hidden] {
-    display: none;
-  }
-  @media (max-width: 640px) {
-    .prose .mermaid-figure {
-      padding: 14px 12px;
-    }
+  @media (max-width: 620px) {
+    .mermaid-toolbar { align-items: flex-start; flex-wrap: wrap; gap: 4px 8px; padding: 8px; }
+    .mermaid-toolbar-title { padding: 7px 5px; }
+    .mermaid-tools { gap: 2px; }
+    .mermaid-viewport { padding: 12px; }
+    .mermaid-button { padding: 5px 7px; }
   }
 </style>
