@@ -3,38 +3,48 @@ interface Props {
   title?: string;
   caption?: string;
 }
-
 const {
-  title = 'Agent loop architecture',
-  caption = 'The model selects an action, tools return an observation, and the updated state enters the next step.',
+  title = 'ReAct Agent 的最小执行结构',
+  caption = '模型选择工具或给出最终回答；工具调用由运行时校验执行，观察结果写回消息状态。',
 } = Astro.props;
 ---
 
 <figure class="architecture-diagram" aria-labelledby="agent-architecture-title">
-  <svg viewBox="0 0 760 260" role="img" aria-labelledby="agent-architecture-title agent-architecture-description">
+  <svg viewBox="0 0 760 310" role="img" aria-labelledby="agent-architecture-title agent-architecture-description">
     <title id="agent-architecture-title">{title}</title>
     <desc id="agent-architecture-description">{caption}</desc>
     <defs>
-      <marker id="architecture-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="currentColor" /></marker>
+      <marker id="architecture-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" fill="currentColor" />
+      </marker>
     </defs>
     <g class="architecture-flow">
-      <path d="M180 100 H260" marker-end="url(#architecture-arrow)" />
-      <path d="M400 100 H480" marker-end="url(#architecture-arrow)" />
-      <path d="M620 100 H690 Q720 100 720 140 V185 Q720 215 690 215 H125 Q95 215 95 185 V150" marker-end="url(#architecture-arrow)" />
+      <path d="M200 100 H280" marker-end="url(#architecture-arrow)" />
+      <path d="M440 100 H520" marker-end="url(#architecture-arrow)" />
+      <path d="M600 145 V270 H120 V145" marker-end="url(#architecture-arrow)" />
+      <path d="M360 145 V185" marker-end="url(#architecture-arrow)" />
     </g>
     <g class="architecture-node">
-      <rect x="40" y="55" width="140" height="90" rx="10" />
-      <text x="110" y="92">State</text><text class="architecture-detail" x="110" y="116">history + memory</text>
+      <rect x="40" y="55" width="160" height="90" rx="10" />
+      <text x="120" y="95">状态</text>
+      <text class="architecture-detail" x="120" y="120">消息、历史与观察</text>
     </g>
     <g class="architecture-node architecture-node-accent">
-      <rect x="260" y="55" width="140" height="90" rx="10" />
-      <text x="330" y="92">Model</text><text class="architecture-detail" x="330" y="116">plan or tool call</text>
+      <rect x="280" y="55" width="160" height="90" rx="10" />
+      <text x="360" y="95">模型</text>
+      <text class="architecture-detail" x="360" y="120">选择工具或回答</text>
     </g>
     <g class="architecture-node">
-      <rect x="480" y="55" width="140" height="90" rx="10" />
-      <text x="550" y="92">Tools</text><text class="architecture-detail" x="550" y="116">act on the world</text>
+      <rect x="520" y="55" width="160" height="90" rx="10" />
+      <text x="600" y="95">Harness</text>
+      <text class="architecture-detail" x="600" y="120">校验并执行工具</text>
     </g>
-    <text class="architecture-loop-label" x="410" y="202">observation → state update</text>
+    <g class="architecture-node">
+      <rect x="280" y="185" width="160" height="60" rx="10" />
+      <text x="360" y="221">最终回答</text>
+    </g>
+    <text class="architecture-loop-label" x="470" y="176">不调用工具</text>
+    <text class="architecture-loop-label" x="360" y="296">Observation → 更新消息 → 下一轮</text>
   </svg>
   <figcaption>{caption}</figcaption>
 </figure>
