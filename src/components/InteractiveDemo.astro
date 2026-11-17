@@ -2,36 +2,85 @@
 interface Props {
   title?: string;
 }
+const { title = 'ReAct 工具调用循环演示' } = Astro.props;
 
-const { title = 'Interactive agent loop' } = Astro.props;
+// 与 examples/react-agent-loop/agent.mjs 的离线示例对应：这里演示协议，不调用模型 API。
 const steps = [
-  ['01', 'Read state'],
-  ['02', 'Plan action'],
-  ['03', 'Run tool'],
-  ['04', 'Update state'],
+  {
+    title: '用户输入',
+    note: '初始消息进入上下文，任务要求查询 project-alpha 的预算余额。',
+    snapshot: { role: 'user', content: '查询 project-alpha 的剩余预算。' },
+  },
+  {
+    title: '选择查询工具',
+    note: '模拟模型返回结构化 tool_call。此时还没有真正查询任何数据。',
+    snapshot: {
+      role: 'assistant',
+      tool_calls: [{ id: 'call-1', name: 'get_project_budget', arguments: { project: 'project-alpha' } }],
+    },
+  },
+  {
+    title: '查询并回传',
+    note: 'Harness 校验后执行工具，将预算 3000 元、已花费 1240 元作为 observation 返回。',
+    snapshot: { role: 'tool', tool_call_id: 'call-1', content: { ok: true, data: { budget: 3000, spent: 1240 } } },
+  },
+  {
+    title: '选择计算工具',
+    note: '模型看到新的 observation 后，决定调用计算余额工具。',
+    snapshot: {
+      role: 'assistant',
+      tool_calls: [{ id: 'call-2', name: 'calculate_remaining', arguments: { budget: 3000, spent: 1240 } }],
+    },
+  },
+  {
+    title: '计算并回传',
+    note: '计算工具返回剩余 1760 元，工具调用结果通过 call_id 与前一条动作配对。',
+    snapshot: { role: 'tool', tool_call_id: 'call-2', content: { ok: true, data: { remaining: 1760 } } },
+  },
+  {
+    title: '模型最终回复',
+    note: '模型停止调用工具并输出最终文本；finished 只表示执行循环结束。',
+    snapshot: { role: 'assistant', content: 'project-alpha 剩余预算 1760 元。', status: 'finished' },
+  },
+  {
+    title: '业务结果核验',
+    note: '独立检查 3000 - 1240 = 1760，示例任务才被标记为通过。',
+    snapshot: { verification: { target: '剩余预算正确', expected: 1760, actual: 1760, passed: true } },
+  },
 ];
 ---
 
 <section class="interactive-demo" data-agent-demo aria-labelledby="agent-demo-title">
   <div class="demo-heading">
     <div>
-      <span class="mini-label">Interactive demo</span>
+      <span class="mini-label">交互式示例 · 离线模拟</span>
       <h2 id="agent-demo-title">{title}</h2>
     </div>
-    <p data-agent-demo-status aria-live="polite">Ready to step through the loop.</p>
+    <p data-agent-demo-status aria-live="polite">第 1 / 7 步：用户输入。</p>
   </div>
   <ol class="agent-demo-steps">
-    {steps.map(([index, label], step) => (
-      <li data-agent-demo-step={step} aria-current={step === 0 ? 'step' : undefined}>
-        <span>{index}</span><strong>{label}</strong>
+    {steps.map((step, index) => (
+      <li
+        data-agent-demo-step={index}
+        data-note={step.note}
+        data-snapshot={JSON.stringify(step.snapshot, null, 2)}
+        aria-current={index === 0 ? 'step' : undefined}
+      >
+        <span>{String(index + 1).padStart(2, '0')}</span>
+        <strong>{step.title}</strong>
       </li>
     ))}
   </ol>
-  <div class="demo-controls">
-    <button type="button" class="primary-link demo-button" data-agent-demo-action="play">Play loop</button>
-    <button type="button" class="quiet-link demo-button" data-agent-demo-action="step">Next step</button>
-    <button type="button" class="quiet-link demo-button" data-agent-demo-action="reset">Reset</button>
+  <div class="demo-output" aria-live="off">
+    <p data-agent-demo-note>{steps[0].note}</p>
+    <pre data-agent-demo-payload>{JSON.stringify(steps[0].snapshot, null, 2)}</pre>
   </div>
+  <div class="demo-controls">
+    <button type="button" class="primary-link demo-button" data-agent-demo-action="play">自动演示</button>
+    <button type="button" class="quiet-link demo-button" data-agent-demo-action="step">下一步</button>
+    <button type="button" class="quiet-link demo-button" data-agent-demo-action="reset">重新开始</button>
+  </div>
+  <p class="demo-disclaimer">此演示展示确定性的消息流；真实模型的工具选择可能不同，任务成功也需要单独核验。</p>
 </section>
 
 <script>
@@ -43,42 +92,70 @@ const steps = [
 
     const steps = Array.from(demo.querySelectorAll<HTMLElement>('[data-agent-demo-step]'));
     const status = demo.querySelector<HTMLElement>('[data-agent-demo-status]');
-    const controls = demo.querySelectorAll<HTMLButtonElement>('[data-agent-demo-action]');
-    const labels = ['Read state', 'Plan action', 'Run tool', 'Update state'];
+    const note = demo.querySelector<HTMLElement>('[data-agent-demo-note]');
+    const payload = demo.querySelector<HTMLElement>('[data-agent-demo-payload]');
+    const controls = Array.from(demo.querySelectorAll<HTMLButtonElement>('[data-agent-demo-action]'));
+    const play = demo.querySelector<HTMLButtonElement>('[data-agent-demo-action="play"]');
+    const nextButton = demo.querySelector<HTMLButtonElement>('[data-agent-demo-action="step"]');
+
     let active = 0;
     let timer: number | undefined;
 
+    const stop = () => {
+      if (timer !== undefined) window.clearInterval(timer);
+      timer = undefined;
+      if (play) play.textContent = '自动演示';
+    };
     const render = () => {
       steps.forEach((step, index) => {
         step.toggleAttribute('data-active', index === active);
+        step.toggleAttribute('data-complete', index < active);
         if (index === active) step.setAttribute('aria-current', 'step');
         else step.removeAttribute('aria-current');
       });
-      if (status) status.textContent = `Step ${active + 1} of ${steps.length}: ${labels[active]}.`;
+      const current = steps[active];
+      const label = current.querySelector('strong')?.textContent || '';
+      if (status) status.textContent = '第 ' + (active + 1) + ' / ' + steps.length + ' 步：' + label + '。';
+      if (note) note.textContent = current.dataset.note || '';
+      if (payload) payload.textContent = current.dataset.snapshot || '';
+      if (nextButton) nextButton.disabled = active >= steps.length - 1;
     };
-    const stop = () => { if (timer) window.clearInterval(timer); timer = undefined; };
-    const next = () => { active = (active + 1) % steps.length; render(); };
+    const advance = () => {
+      if (active >= steps.length - 1) { stop(); return; }
+      active += 1;
+      render();
+      if (active === steps.length - 1) stop();
+    };
     const onClick = (event: Event) => {
       const action = (event.currentTarget as HTMLElement).dataset.agentDemoAction;
-      if (action === 'reset') { stop(); active = 0; render(); if (status) status.textContent = 'Ready to step through the loop.'; }
-      if (action === 'step') { stop(); next(); }
-      if (action === 'play') {
+      if (action === 'reset') {
+        stop();
+        active = 0;
+        render();
+      } else if (action === 'step') {
+        stop();
+        advance();
+      } else if (action === 'play') {
+        if (timer !== undefined) { stop(); return; }
+        if (active === steps.length - 1) { active = 0; render(); }
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          stop(); next();
-          if (status) status.textContent += ' Reduced motion is enabled, so the loop advanced one step.';
+          advance(); // 避免在减少动画的系统中持续自动播放
           return;
         }
-        if (timer) { stop(); if (status) status.textContent = 'Loop paused.'; return; }
-        next();
-        if (status) status.textContent = 'Loop is playing.';
-        timer = window.setInterval(next, 1200);
+        advance();
+        if (active < steps.length - 1) {
+          timer = window.setInterval(advance, 1600);
+          if (play) play.textContent = '暂停演示';
+        }
       }
     };
     controls.forEach((control) => control.addEventListener('click', onClick));
     render();
-    runtime.__agentDemoCleanup = () => { stop(); controls.forEach((control) => control.removeEventListener('click', onClick)); };
+    runtime.__agentDemoCleanup = () => {
+      stop();
+      controls.forEach((control) => control.removeEventListener('click', onClick));
+    };
   }
-
   setupAgentDemo();
   document.addEventListener('astro:page-load', setupAgentDemo);
 </script>
