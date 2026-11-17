@@ -1,7 +1,7 @@
 <script>
   import { applyLanguage, changeLanguage, preferredLanguage, currentLanguage } from '../lib/i18n.mjs';
   const storage = (() => { try { return window.localStorage; } catch { return undefined; } })();
-  let selected = preferredLanguage(storage);
+  let selected = preferredLanguage(storage, document.documentElement.lang);
   const refresh = () => applyLanguage(document, selected);
   refresh();
   document.addEventListener('astro:page-load', refresh);
