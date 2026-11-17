@@ -1,5 +1,5 @@
 ---
-title: "如何判断 Agent 真的完成了任务？从最终状态到过程级评测"
+title: "如何判断 Agent 是否完成任务？"
 description: "系统梳理 Agent 任务完成判定的八种方法、SWE-bench/WebArena/OSWorld/τ-bench 的验证机制，以及结果、过程、约束和评测器可靠性如何结合。"
 pubDate: 2026-11-18
 tags: ["Agent", "Benchmark", "Evaluation", "LLM", "Reliability"]
