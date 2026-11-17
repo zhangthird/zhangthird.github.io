@@ -122,6 +122,32 @@ test('Mermaid research diagrams build as source blocks with a lazy, theme-aware 
   assert.match(layout,/<MermaidDiagrams \/>/);
   assert.match(copy,/getAttribute\(\x27data-language\x27\) === \x27mermaid\x27/);
 });
+test('Mermaid supports source copying, responsive zoom, and a readable fallback',()=>{
+  const component=readFileSync('src/components/MermaidDiagrams.astro','utf8');
+  const messagesFile=readFileSync('src/lib/i18n.mjs','utf8');
+  assert.match(component,/navigator\.clipboard\.writeText\(source\)/);
+  assert.match(component,/setSourceOpen\(figure/);
+  assert.match(component,/mermaid-copy-fallback/);
+  assert.match(component,/applyZoom\(figure/);
+  assert.match(component,/fitScale\(figure/);
+  assert.match(component,/themeVariables:/);
+  assert.match(component,/securityLevel: 'strict'/);
+  for(const key of ['mermaid.diagram','mermaid.zoomIn','mermaid.zoomOut','mermaid.fit','mermaid.showSource','mermaid.hideSource','mermaid.copy','mermaid.copied'])
+    assert.ok(messagesFile.includes("'"+key+"'"),key);
+});
+test('article directory scrolls independently and offers a collapsible mobile contents view',()=>{
+  const page=read('research/online-mind2web-vs-mind2web-live/index.html');
+  const article=readFileSync('src/pages/research/[...id].astro','utf8');
+  const styles=readFileSync('src/styles/global.css','utf8');
+  assert.match(page,/<details class="toc-mobile"/);
+  assert.match(page,/<aside class="toc"/);
+  assert.match(article,/desktopToc\.scrollTop/);
+  assert.match(article,/data-toc-mobile/);
+  assert.match(article,/aria-current/);
+  assert.match(styles,/\.toc nav a\[aria-current="location"\]/);
+  assert.match(styles,/\.toc-mobile\[open\]/);
+  assert.match(styles,/overscroll-behavior: contain/);
+});
 test('homepage leads with articles and navigation includes Essays before About',()=>{
   const html=read('index.html');
   assert.doesNotMatch(html,/personal-hero|hero-copy|研究兴趣/);
