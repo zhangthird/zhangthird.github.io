@@ -135,6 +135,20 @@ test('Mermaid supports source copying, responsive zoom, and a readable fallback'
   for(const key of ['mermaid.diagram','mermaid.zoomIn','mermaid.zoomOut','mermaid.fit','mermaid.showSource','mermaid.hideSource','mermaid.copy','mermaid.copied'])
     assert.ok(messagesFile.includes("'"+key+"'"),key);
 });
+test('Mermaid PNG clipboard export remains separate from copying source',()=>{
+  const component=readFileSync('src/components/MermaidDiagrams.astro','utf8');
+  const messagesFile=readFileSync('src/lib/i18n.mjs','utf8');
+  assert.match(component,/makeButton\('copy-image', 'mermaid\.copyImage'\)/);
+  assert.match(component,/makeButton\('download-image', 'mermaid\.downloadImage'\)/);
+  assert.match(component,/navigator\.clipboard\.write\(\[new ClipboardItem\(\{ 'image\/png': pngPromise \}\)\]\)/);
+  assert.match(component,/canvas\.toBlob/);
+  assert.match(component,/context\.drawImage\(image/);
+  assert.match(component,/download = 'mermaid-diagram\.png'/);
+  assert.match(component,/htmlLabels: false/);
+  assert.match(component,/navigator\.clipboard\.writeText\(source\)/);
+  for(const key of ['mermaid.copyImage','mermaid.downloadImage','mermaid.imageCopied','mermaid.imageCopyFailed','mermaid.imageExportFailed'])
+    assert.ok(messagesFile.includes("'"+key+"'"), key);
+});
 test('article directory scrolls independently and offers a collapsible mobile contents view',()=>{
   const page=read('research/online-mind2web-vs-mind2web-live/index.html');
   const article=readFileSync('src/pages/research/[...id].astro','utf8');
