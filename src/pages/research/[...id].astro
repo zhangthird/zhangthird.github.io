@@ -27,6 +27,7 @@ const postIndex = publishedPosts.findIndex((entry) => entry.id === post.id);
 const newerPost = postIndex > 0 ? publishedPosts[postIndex - 1] : undefined;
 const olderPost = postIndex >= 0 ? publishedPosts[postIndex + 1] : undefined;
 const { Content, headings } = await render(post);
+const articleLanguage = /[\u3400-\u9fff]/.test(post.data.title) ? 'zh-CN' : 'en';
 const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
 const canonical = new URL(`/research/${post.id}/`, Astro.site ?? Astro.url.origin).toString();
 const jsonLd = JSON.stringify({
@@ -34,6 +35,7 @@ const jsonLd = JSON.stringify({
   '@type': 'Article',
   headline: post.data.title,
   description: post.data.description,
+  inLanguage: articleLanguage,
   datePublished: post.data.pubDate.toISOString(),
   dateModified: (post.data.updatedDate ?? post.data.pubDate).toISOString(),
   author: {
@@ -49,6 +51,7 @@ const jsonLd = JSON.stringify({
 <BaseLayout
   title={`${post.data.title} — Cheng Cui`}
   description={post.data.description}
+  contentLanguage={articleLanguage}
   type="article"
   breadcrumbs={[
     { name: 'Home', href: '/' },
@@ -62,8 +65,8 @@ const jsonLd = JSON.stringify({
   <article class="article-wrap page-width" data-article-root>
     <header class="article-header">
       <a class="back-link" href="/research/">← <T k="nav.research" /></a>
-      <h1 lang="en" data-pagefind-meta="title">{post.data.title}</h1>
-      <p lang="en" class="article-deck">{post.data.description}</p>
+      <h1 lang={articleLanguage} data-pagefind-meta="title">{post.data.title}</h1>
+      <p lang={articleLanguage} class="article-deck">{post.data.description}</p>
       <div class="article-meta">
         <time data-site-i18n-date datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
         {post.data.readingTime && <T k="article.readingTime" params={{count:parseInt(post.data.readingTime)}} />}
@@ -82,7 +85,7 @@ const jsonLd = JSON.stringify({
           </nav>
         </details>
       )}
-      <div class="prose" lang="en" data-article-prose>
+      <div class="prose" lang={articleLanguage} data-article-prose>
         <Content />
         {post.data.demo === 'agent-loop' && (
           <>
