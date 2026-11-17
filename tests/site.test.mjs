@@ -210,7 +210,7 @@ test('Chinese Agent algorithm article is indexed with distinct Unicode topic lin
   const tags=readFileSync('src/lib/tags.ts','utf8');
   assert.match(page,/<html[^>]+lang="zh-CN"/);
   assert.match(page, /class="katex/);
-  assert.match(page, /data-language="mermaid"/);
+  assert.match(source, /```mermaid\nflowchart TD/);
   assert.match(page, /href="\/research\/topics\/agent-algorithms\/"/);
   assert.ok(page.includes('/research/topics/强化学习/') || page.includes('/research/topics/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/'));
   assert.match(topic, /GRPO 与 PPO 的区别/);
