@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { runAgent, executeTool, createDemoClient } from '../examples/react-agent-loop/agent.mjs';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync,existsSync,statSync} from 'node:fs';
 import {join,resolve,dirname,basename} from 'node:path';
@@ -40,6 +41,62 @@ test('reference technical posts render math and syntax-highlighted code',()=>{
   }
   assert.match(read('research/react-agent-loop/index.html'),/astro-code|shiki/);
 });
+test('Chinese ReAct tutorial renders the full code and the interactive trace',()=>{
+  const page = read('research/react-agent-loop/index.html');
+  const source = readFileSync('src/content/research/react-agent-loop.md', 'utf8');
+  const demo = readFileSync('src/components/InteractiveDemo.astro', 'utf8');
+  assert.match(page, /<html[^>]+lang="zh-CN"/);
+  assert.match(page, /class="katex/);
+  assert.match(page, /astro-code|shiki/);
+  assert.match(page, /data-language="mermaid"/);
+  assert.match(page, /data-agent-demo-note/);
+  assert.match(page, /data-agent-demo-payload/);
+  assert.match(source, /learn-claude-code/);
+  assert.match(source, /examples\/react-agent-loop\/agent\.mjs/);
+  assert.match(demo, /call-1/);
+  assert.match(demo, /1760/);
+});
+
+test('offline ReAct example maintains tool_call_id pairing and reaches the final state',async()=>{
+  const events = [];
+  const result = await runAgent({
+    client: createDemoClient(),
+    task: '查询 project-alpha 的剩余预算。',
+    onEvent: (event) => events.push(event),
+  });
+  assert.equal(result.status, 'finished');
+  assert.equal(result.turns, 3);
+  assert.equal(result.toolCalls, 2);
+  assert.match(result.answer, /1760/);
+  const calls = result.messages.flatMap((message) => message.tool_calls || []).map((call) => call.id);
+  const outputs = result.messages.filter((message) => message.role === 'tool').map((message) => message.tool_call_id);
+  assert.deepEqual(calls, outputs);
+  assert.deepEqual(events.filter((event) => event.type === 'tool').map((event) => event.name), [
+    'get_project_budget', 'calculate_remaining',
+  ]);
+});
+
+test('ReAct example validates tool inputs and handles budget-limited execution',async()=>{
+  assert.deepEqual(
+    await executeTool({type: 'function', function: {name: 'bash', arguments: '{"command":"ls"}'}}),
+    {ok:false,error:'未知或未授权的工具：bash'},
+  );
+  assert.equal((await executeTool({type:'function',function:{name:'calculate_remaining',arguments:'{"budget":"3000","spent":1240}'}})).ok,false);
+  assert.equal((await executeTool({type:'function',function:{name:'get_project_budget',arguments:'{'}})).ok,false);
+  const capped = await runAgent({client:createDemoClient(),task:'查询余额',maxToolCalls:1});
+  assert.equal(capped.status,'max_tool_calls');
+  assert.equal(capped.toolCalls,1);
+  assert.equal(capped.messages.filter((message)=>message.role==='tool').length,1);
+  const short = await runAgent({client:createDemoClient(),task:'查询余额',maxTurns:2});
+  assert.equal(short.status,'max_turns');
+  assert.equal(short.toolCalls,2);
+  const incomplete = await runAgent({
+    client:{complete:async()=>({role:'assistant',content:'仅部分输出',finish_reason:'length'})},
+    task:'查询余额',
+  });
+  assert.equal(incomplete.status,'incomplete');
+});
+
 test('local navigation, stylesheets and images resolve in deployment output',()=>{
   const broken=[];
   for(const file of pages){
