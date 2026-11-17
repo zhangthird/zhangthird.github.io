@@ -1,0 +1,136 @@
+<script>
+  // A pinned ESM build avoids adding an always-loaded diagram package to the website.
+  // Only articles containing fenced `mermaid` blocks request the module.
+  const MERMAID_URL = 'https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.esm.min.mjs';
+
+  type MermaidInstance = {
+    initialize: (options: Record<string, unknown>) => void;
+    render: (id: string, source: string) => Promise<{
+      svg: string;
+      bindFunctions?: (element: Element) => void;
+    }>;
+  };
+
+  let mermaidPromise: Promise<MermaidInstance> | undefined;
+  let pending = Promise.resolve();
+  let diagramCounter = 0;
+
+  function loadMermaid() {
+    mermaidPromise ??= import(/* @vite-ignore */ MERMAID_URL)
+      .then((module) => module.default as MermaidInstance)
+      .catch((error) => {
+        mermaidPromise = undefined;
+        throw error;
+      });
+    return mermaidPromise;
+  }
+
+  function getFigure(pre: HTMLPreElement): { figure: HTMLElement; canvas: HTMLElement } {
+    let figure = pre.closest<HTMLElement>('.mermaid-figure');
+    if (!figure) {
+      figure = document.createElement('figure');
+      figure.className = 'mermaid-figure';
+      figure.setAttribute('data-pagefind-ignore', '');
+      pre.before(figure);
+      const canvas = document.createElement('div');
+      canvas.className = 'mermaid-canvas';
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', 'Mermaid diagram');
+      figure.append(canvas, pre);
+    }
+    return {
+      figure,
+      canvas: figure.querySelector<HTMLElement>('.mermaid-canvas')!,
+    };
+  }
+
+  async function renderDiagrams() {
+    const blocks = Array.from(document.querySelectorAll<HTMLPreElement>('.prose pre[data-language="mermaid"]'));
+    if (!blocks.length) return;
+
+    let mermaid: MermaidInstance;
+    try {
+      mermaid = await loadMermaid();
+    } catch (error) {
+      // Keep the original highlighted code readable when the diagram library is unavailable.
+      console.error('Unable to load the Mermaid renderer:', error);
+      return;
+    }
+
+    const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default';
+    mermaid.initialize({
+      startOnLoad: false,
+      theme,
+      securityLevel: 'strict',
+      fontFamily: 'system-ui, "PingFang SC", "Microsoft YaHei", sans-serif',
+    });
+
+    for (const pre of blocks) {
+      if (!pre.isConnected) continue;
+      const { figure, canvas } = getFigure(pre);
+      if (figure.dataset.renderedTheme === theme) continue;
+      const source = pre.querySelector('code')?.textContent?.trim() || pre.textContent?.trim() || '';
+      if (!source) continue;
+
+      try {
+        const id = `research-mermaid-${++diagramCounter}`;
+        const { svg, bindFunctions } = await mermaid.render(id, source);
+        if (!figure.isConnected) continue;
+        canvas.innerHTML = svg;
+        bindFunctions?.(canvas);
+        pre.hidden = true;
+        figure.dataset.renderedTheme = theme;
+      } catch (error) {
+        console.error('Unable to render a Mermaid diagram:', error);
+        canvas.replaceChildren();
+        pre.hidden = false;
+        delete figure.dataset.renderedTheme;
+      }
+    }
+  }
+
+  function scheduleRender() {
+    pending = pending.then(renderDiagrams).catch((error) => {
+      console.error('Mermaid diagram initialization failed:', error);
+    });
+  }
+
+  document.addEventListener('astro:page-load', scheduleRender);
+  new MutationObserver((changes) => {
+    if (changes.some((change) => change.attributeName === 'data-theme')) scheduleRender();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  scheduleRender();
+</script>
+
+<style is:global>
+  .prose .mermaid-figure {
+    max-width: 100%;
+    margin: 1.9rem 0;
+    padding: 20px 16px;
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+  .prose .mermaid-canvas {
+    display: grid;
+    min-width: 540px;
+    place-items: center;
+  }
+  .prose .mermaid-canvas svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+  .prose .mermaid-figure pre {
+    margin: 0;
+  }
+  .prose .mermaid-figure pre[hidden] {
+    display: none;
+  }
+  @media (max-width: 640px) {
+    .prose .mermaid-figure {
+      padding: 14px 12px;
+    }
+  }
+</style>
