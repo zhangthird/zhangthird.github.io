@@ -19,11 +19,13 @@ const posts = (await getCollection('research'))
   .filter((post): post is CollectionEntry<'research'> => !post.data.draft && post.data.tags.some((tag) => tagSlug(tag) === tagSlug(tagName)))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 const tagPath = `/research/topics/${tagSlug(tagName)}/`;
+const tagLanguage = /[\u3400-\u9fff]/.test(tagName) ? 'zh-CN' : 'en';
 ---
 
 <BaseLayout
   title={`${tagName} — Research Topics — Cheng Cui`}
-  description={`Research notes tagged ${tagName}.`}
+  description={tagLanguage === 'zh-CN' ? `${tagName}主题下的研究与技术文章。` : `Research notes tagged ${tagName}.`}
+  contentLanguage={tagLanguage}
   breadcrumbs={[
     { name: 'Home', href: '/' },
     { name: 'Research & Engineering', href: '/research/' },
