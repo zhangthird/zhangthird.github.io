@@ -95,7 +95,10 @@ const breadcrumbJsonLd = breadcrumbItems.length > 1 ? JSON.stringify({
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         let saved; try { saved = localStorage.getItem('theme'); } catch {}
         document.documentElement.dataset.theme = saved === 'light' || saved === 'dark' ? saved : (systemDark ? 'dark' : 'light');
-        try { document.documentElement.lang = localStorage.getItem('site-language') === 'zh' ? 'zh-CN' : 'en'; } catch {}
+        try {
+          const savedLanguage = localStorage.getItem('site-language');
+          if (savedLanguage === 'zh' || savedLanguage === 'en') document.documentElement.lang = savedLanguage === 'zh' ? 'zh-CN' : 'en';
+        } catch {}
       })();
     </script>
     <ClientRouter fallback="swap" />
