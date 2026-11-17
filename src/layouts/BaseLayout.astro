@@ -4,6 +4,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import SearchDialog from '../components/SearchDialog.astro';
 import ContentCopy from '../components/ContentCopy.astro';
+import MermaidDiagrams from '../components/MermaidDiagrams.astro';
 import Language from '../components/Language.astro';
 import T from '../components/T.astro';
 import { translate } from '../lib/i18n.mjs';
@@ -108,6 +109,7 @@ const breadcrumbJsonLd = breadcrumbItems.length > 1 ? JSON.stringify({
     </div>
     <SearchDialog />
     <ContentCopy />
+    <MermaidDiagrams />
     <Language />
 
     <script>
