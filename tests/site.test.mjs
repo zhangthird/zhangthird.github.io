@@ -141,10 +141,10 @@ test('Mermaid PNG clipboard export remains separate from copying source',()=>{
   assert.match(component,/makeButton\('copy-image', 'mermaid\.copyImage'\)/);
   assert.match(component,/makeButton\('download-image', 'mermaid\.downloadImage'\)/);
   assert.match(component,/navigator\.clipboard\.write\(\[new ClipboardItem\(\{ 'image\/png': pngPromise \}\)\]\)/);
-  assert.match(component,/canvas\\.toBlob/);
-  assert.match(component,/querySelectorAll\\('foreignObject'\\)/);
-  assert.match(component,/target\\.replaceWith\\(text\\)/);
-  assert.match(component,/new XMLSerializer\\(\\)\\.serializeToString\\(clone\\)/);
+  assert.ok(component.includes('canvas.toBlob'));
+  assert.ok(component.includes("querySelectorAll('foreignObject')"));
+  assert.ok(component.includes('target.replaceWith(text)'));
+  assert.ok(component.includes('new XMLSerializer().serializeToString(clone)'));
   assert.match(component,/context\.drawImage\(image/);
   assert.match(component,/download = 'mermaid-diagram\.png'/);
   assert.match(component,/htmlLabels: false/);
