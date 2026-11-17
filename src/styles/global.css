@@ -243,12 +243,80 @@ main > .home-section:first-of-type { border-top: 0; }
 .comments-heading p { margin: 0; color: var(--muted); font-size: var(--type-small); line-height: 1.7; }
 .giscus, .giscus-frame { width: 100%; }
 :root[data-theme="dark"] .astro-code, :root[data-theme="dark"] .astro-code span { color: var(--shiki-dark) !important; background-color: var(--shiki-dark-bg) !important; font-style: var(--shiki-dark-font-style) !important; font-weight: var(--shiki-dark-font-weight) !important; text-decoration: var(--shiki-dark-text-decoration) !important; }
-.toc { position: sticky; top: 100px; border-left: 1px solid var(--line); padding-left: 20px; max-height: calc(100vh - 130px); overflow: auto; }
-.toc-label { margin-bottom: 12px; }
-.toc nav { display: grid; gap: 10px; }
-.toc a { color: var(--muted); font-size: var(--type-small); line-height: 1.6; overflow-wrap: anywhere; }
-.toc a.nested { padding-left: 12px; font-size: var(--type-meta); }
-.toc a:hover { color: var(--accent); }
+/* Reading navigation stays understated, but the active section is easy to locate. */
+.toc {
+  position: sticky;
+  top: 96px;
+  align-self: start;
+  max-height: calc(100dvh - 118px);
+  min-height: 0;
+  padding-right: 7px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.toc-label {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 2px 0 12px 13px;
+  background: var(--bg);
+}
+.toc nav { display: grid; gap: 2px; border-left: 1px solid var(--line); }
+.toc nav a {
+  display: block;
+  margin-left: -1px;
+  padding: 8px 10px 8px 13px;
+  border-left: 2px solid transparent;
+  border-radius: 0 5px 5px 0;
+  color: var(--muted);
+  font-size: var(--type-small);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.toc nav a.nested { padding-left: 25px; font-size: var(--type-meta); }
+.toc nav a:hover { background: var(--surface-2); color: var(--text); }
+.toc nav a[aria-current="location"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+  font-weight: var(--weight-medium);
+}
+.toc-mobile { display: none; margin: 0 0 26px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+.toc-mobile summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  list-style: none;
+}
+.toc-mobile summary::-webkit-details-marker { display: none; }
+.toc-mobile summary::after { content: '⌄'; color: var(--muted); font-size: 18px; line-height: 1; transition: transform .15s; }
+.toc-mobile[open] summary::after { transform: rotate(180deg); }
+.toc-mobile nav { display: grid; max-height: min(48dvh, 360px); overflow-y: auto; border-top: 1px solid var(--line); padding: 6px; }
+.toc-mobile nav a {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: var(--type-small);
+  line-height: 1.5;
+  text-decoration: none;
+}
+.toc-mobile nav a.nested { padding-left: 27px; font-size: var(--type-meta); }
+.toc-mobile nav a:hover { color: var(--text); background: var(--surface-2); }
+.toc-mobile nav a[aria-current="location"] { color: var(--accent); background: var(--accent-soft); font-weight: var(--weight-medium); }
 .legacy-notice { max-width: var(--reading-width); padding: 16px 20px; border-left: 2px solid var(--accent); background: var(--surface-2); color: var(--muted); font-size: var(--type-small); line-height: 1.8; }
 .legacy-notice a { color: var(--accent); }
 
@@ -288,6 +356,7 @@ main > .home-section:first-of-type { border-top: 0; }
 @media (max-width: 840px) {
   .article-grid { grid-template-columns: minmax(0, 1fr); max-width: var(--reading-width); }
   .toc { display: none; }
+  .toc-mobile { display: block; }
 }
 @media (max-width: 760px) {
   .header-inner { min-height: 64px; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding-block: 10px; }
