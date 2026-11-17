@@ -2,7 +2,7 @@
 title: "GRPO 与 PPO 的区别"
 description: "从优势估计、裁剪目标、Critic、采样成本和奖励设计理解 PPO 与 GRPO，并讨论它们在 LLM Agent 强化学习中的适用场景。"
 pubDate: 2026-11-18
-tags: ["Agent 算法", "Agent", "强化学习", "PPO", "GRPO", "大语言模型"]
+tags: ["Agent 算法", "强化学习", "PPO", "GRPO", "大语言模型"]
 featured: false
 draft: false
 readingTime: "12 min read"
