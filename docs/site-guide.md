@@ -21,3 +21,15 @@
 ## 订阅与链接
 
 网站提供 RSS、站点地图和稳定的文章链接。旧文章地址会继续保留或跳转到对应的新地址，便于从搜索结果、收藏夹和外部引用继续访问。
+
+## 技术文章中的图表
+
+Research & Engineering 栏目支持使用 Mermaid 绘制流程图、架构图、时序图等。只需在 `src/content/research/` 的 Markdown 文章中加入 `mermaid` 代码块：
+
+````mermaid
+flowchart LR
+    A["任务生成"] --> B["Agent 执行"]
+    B --> C["结果验证"]
+````
+
+文章页面会自动渲染图表，并随浅色/深色主题更新配色；在脚本或图表资源加载失败时，仍保留可读的 Mermaid 源码。手机上较宽的图可以横向滚动。图表语法参阅 [Mermaid 官方文档](https://mermaid.js.org/syntax/flowchart.html)。
