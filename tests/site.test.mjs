@@ -253,7 +253,7 @@ test('research topics have stable pages and tags link to their matching notes',(
   const researchPage=readFileSync('src/pages/research.astro','utf8');
   assert.match(researchPage,/href="\/research\/topics\/"/);
   assert.doesNotMatch(researchPage,/href="\/tags\/"/);
-  assert.match(readFileSync('src/content/research/react-agent-loop.md','utf8'),/tags: \["Agent"/);
+  assert.match(readFileSync('src/content/research/react-agent-loop.md','utf8'),/tags: \["Agent 算法"/);
   assert.match(readFileSync('src/content/research/pid-lagrangian-rl.md','utf8'),/"RL"/);
 });
 test('Chinese Agent algorithm article is indexed with distinct Unicode topic links',()=>{
