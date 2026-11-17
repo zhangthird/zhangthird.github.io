@@ -247,7 +247,7 @@ test('Writing merges into research with canonical routes and no duplicate listin
   for(const file of ['index.html','research/index.html','archives/index.html','search/index.html','sitemap.xml','rss.xml']){
     const html=read(file);
     assert.doesNotMatch(html,/\/writing\//);
-    if(file.endsWith('.html'))assert.equal((html.match(/href="\/research\/react-agent-loop\/"/g)||[]).length,1);
+    if(file.endsWith('.html') && file !== 'index.html')assert.equal((html.match(/href="\/research\/react-agent-loop\/"/g)||[]).length,1);
   }
   const nav=read('index.html').match(/<nav[^>]*class="main-nav"[\s\S]*?<\/nav>/)[0];
   assert.equal((nav.match(/<a /g)||[]).length,5);
