@@ -72,6 +72,16 @@ const jsonLd = JSON.stringify({
     </header>
 
     <div class="article-grid">
+      {toc.length > 0 && (
+        <details class="toc-mobile" data-toc-mobile data-pagefind-ignore>
+          <summary><T k="contents" /></summary>
+          <nav aria-label={translate("contents")} data-site-i18n-aria-label="contents">
+            {toc.map((heading) => (
+              <a class:list={{ nested: heading.depth === 3 }} data-toc-link href={`#${heading.slug}`}>{heading.text}</a>
+            ))}
+          </nav>
+        </details>
+      )}
       <div class="prose" lang="en" data-article-prose>
         <Content />
         {post.data.demo === 'agent-loop' && (
@@ -121,10 +131,6 @@ const jsonLd = JSON.stringify({
       transform-origin: left center;
       transition: transform 80ms linear;
     }
-    .toc a[aria-current="location"] {
-      color: var(--text);
-      font-weight: var(--weight-medium);
-    }
     @media (prefers-reduced-motion: reduce) {
       .reading-progress span { transition: none; }
     }
@@ -158,6 +164,17 @@ const jsonLd = JSON.stringify({
         })
         .filter((item): item is { link: HTMLAnchorElement; heading: HTMLElement } => Boolean(item.heading));
 
+      const desktopToc = document.querySelector<HTMLElement>('.toc');
+      const tocLabel = desktopToc?.querySelector<HTMLElement>('.toc-label');
+      const mobileToc = document.querySelector<HTMLDetailsElement>('[data-toc-mobile]');
+      const onMobileLink = (event: Event) => {
+        const target = event.target;
+        if (target instanceof Element && target.closest('a[data-toc-link]')) {
+          window.requestAnimationFrame(() => { if (mobileToc) mobileToc.open = false; });
+        }
+      };
+      mobileToc?.addEventListener('click', onMobileLink);
+
       let activeId = '';
       const setActive = (id: string) => {
         if (!id || id === activeId) return;
@@ -165,6 +182,17 @@ const jsonLd = JSON.stringify({
         for (const { link, heading } of headings) {
           if (heading.id === id) link.setAttribute('aria-current', 'location');
           else link.removeAttribute('aria-current');
+        }
+
+        // Scroll the directory independently, without moving the article.
+        const active = headings.find(({ heading, link }) => heading.id === id && desktopToc?.contains(link))?.link;
+        if (desktopToc && active && window.getComputedStyle(desktopToc).display !== 'none') {
+          const box = desktopToc.getBoundingClientRect();
+          const item = active.getBoundingClientRect();
+          const top = Math.max(box.top, tocLabel?.getBoundingClientRect().bottom ?? box.top) + 8;
+          const bottom = box.bottom - 10;
+          if (item.top < top) desktopToc.scrollTop += item.top - top;
+          else if (item.bottom > bottom) desktopToc.scrollTop += item.bottom - bottom;
         }
       };
 
@@ -200,6 +228,7 @@ const jsonLd = JSON.stringify({
       runtime.__articleUxCleanup = () => {
         window.removeEventListener('scroll', onScroll);
         window.removeEventListener('resize', onScroll);
+        mobileToc?.removeEventListener('click', onMobileLink);
       };
     }
 
