@@ -101,7 +101,8 @@ export function setupContentCopy(host) {
     const block = formula.closest('.katex-display');
     enhance(block || formula, source, 'math', Boolean(block));
   }
-  for (const pre of doc.querySelectorAll('.prose pre:not([data-language="mermaid"])')) {
+  for (const pre of doc.querySelectorAll('.prose pre')) {
+    if (pre.getAttribute('data-language') === 'mermaid') continue;
     const code = pre.querySelector('code');
     if (code) enhance(pre, code, 'code');
   }
