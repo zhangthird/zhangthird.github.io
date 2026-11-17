@@ -228,6 +228,59 @@
     clone.style.width = width + 'px';
     clone.style.height = height + 'px';
 
+    // Chromium marks SVG images containing foreignObject as tainted canvases.
+    // Mermaid uses HTML for some node labels, even with htmlLabels disabled.
+    // Recreate those labels as ordinary SVG text before rasterization.
+    const liveLabels = Array.from(original.querySelectorAll('foreignObject'));
+    const exportLabels = Array.from(clone.querySelectorAll('foreignObject'));
+    for (let index = 0; index < exportLabels.length; index++) {
+      const target = exportLabels[index];
+      const live = liveLabels[index];
+      const x = Number(target.getAttribute('x')) || 0;
+      const y = Number(target.getAttribute('y')) || 0;
+      const boxWidth = Number(target.getAttribute('width')) || 200;
+      const boxHeight = Number(target.getAttribute('height')) || 24;
+      const centerX = x + boxWidth / 2;
+      const centerY = y + boxHeight / 2;
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      const fontSize = 14;
+      text.setAttribute('font-size', String(fontSize));
+      text.setAttribute('font-family', 'system-ui, sans-serif');
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('dominant-baseline', 'middle');
+      text.setAttribute('fill', document.documentElement.dataset.theme === 'dark' ? '#ececee' : '#18181b');
+
+      const raw = (live?.firstElementChild as HTMLElement | null)?.innerText
+        || live?.textContent || '';
+      const paragraphs = raw.split(/\n+/).map((part) => part.trim()).filter(Boolean);
+      const painter = document.createElement('canvas').getContext('2d');
+      if (painter) painter.font = fontSize + 'px system-ui';
+      const maxWidth = Math.max(20, boxWidth - 8);
+      const lines: string[] = [];
+      for (const paragraph of paragraphs.length ? paragraphs : ['']) {
+        let line = '';
+        for (const char of paragraph) {
+          const candidate = line + char;
+          if (line && painter && painter.measureText(candidate).width > maxWidth) {
+            lines.push(line.trim());
+            line = char;
+          } else {
+            line = candidate;
+          }
+        }
+        if (line) lines.push(line.trim());
+      }
+      const step = 20;
+      lines.forEach((line, lineIndex) => {
+        const span = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        span.setAttribute('x', String(centerX));
+        span.setAttribute('y', String(centerY + (lineIndex - (lines.length - 1) / 2) * step));
+        span.textContent = line;
+        text.append(span);
+      });
+      target.replaceWith(text);
+    }
+
     const source = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(source);
     try {
