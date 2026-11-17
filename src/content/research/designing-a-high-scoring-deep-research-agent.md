@@ -37,24 +37,11 @@ Deep Research 至少包含两种不同的任务形态：一种要求生成资料
 
 我会采用一个负责决策的 Research Orchestrator，配合若干专注于搜索、分析和验证的执行模块。模块可以由同一个模型担任不同角色，也可以根据成本使用不同模型；并不要求一开始就部署很多独立的 Agent。
 
-~~~mermaid
-flowchart TD
-    A["用户研究问题"] --> B["Research Brief：目标、边界、交付要求"]
-    B --> C["Rubric & Research DAG：研究要求和依赖图"]
-    C --> O["Research Orchestrator：选动作、分预算、判停止"]
-    O --> S["Search Agent：检索与阅读"]
-    O --> N["Analysis Agent：比较、计算与推理"]
-    O --> V["Critic Agent：证伪、交叉检查"]
-    S --> E[("Evidence Store / Claim Graph")]
-    N --> E
-    V --> E
-    E --> U["Coverage & Verification Auditor"]
-    U -->|"发现缺口或冲突"| O
-    U -->|"满足交付条件"| W["统一写作与结构优化"]
-    W --> X["Claim-to-Source 引用审计"]
-    X -->|"证据不足"| O
-    X -->|"通过"| F["最终研究报告"]
-~~~
+![Deep Research Agent 系统架构图：研究目标、研究控制器、搜索/分析/核查、证据图、质量审计与报告生成](/images/research/deep-research-agent-architecture.svg)
+
+[查看或下载完整 SVG 架构图](/images/research/deep-research-agent-architecture.svg)
+
+*图：研究执行结果写入证据库，审计器发现缺口后将修复任务反馈给 Research Orchestrator；通过检查后进行统一写作与引用核查。*
 
 这里有三个需要刻意分开的职责。
 
