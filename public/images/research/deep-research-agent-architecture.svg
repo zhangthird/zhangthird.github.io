@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1170" viewBox="0 0 1500 1170" role="img" aria-labelledby="diagram-title diagram-desc">
+<title id="diagram-title">Deep Research Agent 系统架构</title>
+<desc id="diagram-desc">用户研究目标进入 Research Orchestrator，调度 Search、Analysis 和 Critic Agent，将结果写入 Evidence Store 和 Claim Graph，再经过 Coverage Auditor、Report Writer 和 Citation Auditor 得到最终报告，发现缺口后返回研究控制器继续执行。</desc>
+<defs>
+<style>
+text{font-family:system-ui,-apple-system,"Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#172033}
+.heading{font-size:32px;font-weight:700}.title{font-size:21px;font-weight:700}.caption{font-size:15px;fill:#526174}.line{fill:none;stroke:#64748b;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arr)}.loop{stroke:#d97706;stroke-dasharray:11 8;stroke-width:3}.card{fill:#fff;stroke:#cbd5e1;stroke-width:2.2;rx:18}.primary{fill:#eff6ff;stroke:#2563eb}.memory{fill:#f0fdf4;stroke:#16a34a}.verify{fill:#fff7ed;stroke:#ea580c}.report{fill:#f5f3ff;stroke:#7c3aed}.foot{fill:#64748b;font-size:14px}
+</style>
+<marker id="arr" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0 L12 6 L0 12Z" fill="#64748b"/></marker>
+<marker id="arrOrange" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0 L12 6 L0 12Z" fill="#d97706"/></marker>
+</defs>
+<rect width="1500" height="1170" fill="#fff"/>
+<text x="750" y="56" text-anchor="middle" class="heading">Deep Research Agent 系统架构</text>
+<text x="750" y="88" text-anchor="middle" class="caption">Rubric-Guided Research · Adaptive Planning · Evidence Graph · Iterative Verification</text>
+<rect x="510" y="128" width="480" height="90" class="card primary"/>
+<text x="750" y="166" text-anchor="middle" class="title">User Query → Research Brief</text>
+<text x="750" y="195" text-anchor="middle" class="caption">任务范围、质量要求、预算和交付形式</text>
+<path class="line" d="M750 218V267"/>
+<rect x="390" y="267" width="720" height="112" class="card primary"/>
+<text x="750" y="307" text-anchor="middle" class="title">Research Orchestrator</text>
+<text x="750" y="335" text-anchor="middle" class="caption">研究 DAG · Rubric · 优先级调度 · 执行预算 · 停止决策</text>
+<text x="750" y="358" text-anchor="middle" class="foot">动态选择搜索、阅读、分析、核查或写作</text>
+<path class="line" d="M610 379L255 465"/>
+<path class="line" d="M750 379V465"/>
+<path class="line" d="M890 379L1245 465"/>
+<rect x="55" y="465" width="400" height="110" class="card"/>
+<text x="255" y="507" text-anchor="middle" class="title">Search Agent</text>
+<text x="255" y="540" text-anchor="middle" class="caption">检索来源 · 阅读原文 · 抽取证据</text>
+<rect x="550" y="465" width="400" height="110" class="card"/>
+<text x="750" y="507" text-anchor="middle" class="title">Analysis Agent</text>
+<text x="750" y="540" text-anchor="middle" class="caption">对比分析 · 计算推导 · 综合研究</text>
+<rect x="1045" y="465" width="400" height="110" class="card"/>
+<text x="1245" y="507" text-anchor="middle" class="title">Critic Agent</text>
+<text x="1245" y="540" text-anchor="middle" class="caption">交叉验证 · 查找矛盾 · 寻找反证</text>
+<path class="line" d="M255 575L610 652"/>
+<path class="line" d="M750 575V652"/>
+<path class="line" d="M1245 575L890 652"/>
+<rect x="395" y="652" width="710" height="125" class="card memory"/>
+<text x="750" y="697" text-anchor="middle" class="title">Evidence Store + Claim Graph</text>
+<text x="750" y="730" text-anchor="middle" class="caption">原始链接 · 证据片段 · 原子事实 · 支持 / 冲突 / 依赖关系</text>
+<text x="750" y="754" text-anchor="middle" class="foot">持久化记录证据及对应的研究要求</text>
+<path class="line" d="M750 777V843"/>
+<rect x="420" y="843" width="660" height="112" class="card verify"/>
+<text x="750" y="887" text-anchor="middle" class="title">Coverage &amp; Verification Auditor</text>
+<text x="750" y="922" text-anchor="middle" class="caption">检查研究覆盖、事实支持、引用准确性与剩余缺口</text>
+<path d="M420 895H305V322H390" fill="none" stroke="#d97706" stroke-width="3" stroke-dasharray="11 8" marker-end="url(#arrOrange)"/>
+<text x="126" y="620" class="caption" fill="#d97706">发现缺口后</text>
+<text x="126" y="644" class="caption" fill="#d97706">继续研究</text>
+<path class="line" d="M1080 899H1190V963"/>
+<rect x="1110" y="963" width="335" height="70" class="card report"/>
+<text x="1277" y="991" text-anchor="middle" class="title">Report Writer</text>
+<text x="1277" y="1016" text-anchor="middle" class="foot">统一生成结构化报告</text>
+<path class="line" d="M1277 1033V1052"/>
+<rect x="1110" y="1052" width="335" height="68" class="card report"/>
+<text x="1277" y="1078" text-anchor="middle" class="title">Citation Auditor</text>
+<text x="1277" y="1101" text-anchor="middle" class="foot">逐条核对主张与原文证据</text>
+<path class="line" d="M1110 1086H1000V1135H830"/>
+<rect x="400" y="1100" width="430" height="56" class="card report"/>
+<text x="615" y="1136" text-anchor="middle" class="title">Final Research Report</text>
+</svg>
