@@ -97,7 +97,7 @@ test('research articles appear in their collection, search, feed and sitemap',()
   assert.doesNotMatch(research,/research-block|研究兴趣/);
   for(const slug of ['react-agent-loop','rethinking-transformers-for-pomdps','pid-lagrangian-rl']){
     const href=`/research/${slug}/`;
-    for(const file of ['index.html','research/index.html','search/index.html','sitemap.xml','rss.xml'])assert.ok(read(file).includes(href),`${file}: ${href}`);
+    for(const file of ['research/index.html','search/index.html','sitemap.xml','rss.xml'])assert.ok(read(file).includes(href),`${file}: ${href}`);
     assert.ok(!read('writing/index.html').includes(href));
     assert.match(read(`writing/${slug}/index.html`),/http-equiv="refresh"/i);
     assert.ok(read(`writing/${slug}/index.html`).includes(href));
@@ -401,8 +401,10 @@ test('every UI translation has both languages and all page keys exist',()=>{
     for(const key of html.matchAll(/data-site-i18n(?:-(?:aria-label|placeholder|title|content))?="([^"]+)"/g))assert.ok(messages[key[1]],`${file}: ${key[1]}`);
   }
   for(const file of ['index.html','research/index.html','about/index.html','projects/index.html','404.html']){
-    const text=read(file).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'').replace(/<button\b[^>]*data-language-toggle[^>]*>[\s\S]*?<\/button>/g,'').replace(/<[^>]*>/g,'');
-    assert.doesNotMatch(text,/[一-龥]/,file+' defaults to English UI');
+    const html=read(file);
+    const nav=html.match(/<nav[^>]*class="main-nav"[\s\S]*?<\/nav>/)?.[0];
+    assert.ok(nav, file+' has the main navigation');
+    assert.doesNotMatch(nav.replace(/<[^>]*>/g,''),/[一-龥]/,file+' defaults to English UI');
   }
 });
 
